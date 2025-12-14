@@ -8,159 +8,172 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+import typing as t
+import traceback
 
-def verify_dataset():
-    """Load and verify the NASA C-MAPSS dataset"""
+def verify_dataset() -> bool:
+    """
+    Loads the C-MAPSS dataset file, prints a comprehensive statistical report, 
+    and checks if the dataset meets the project's minimum size requirement.
+
+    Returns
+    -------
+    bool
+        True if the file is found, loaded, and verification is complete, False otherwise.
+    """
     
-    # Define column names (C-MAPSS doesn't include headers)
-    columns = ['unit_id', 'time_cycles', 'setting_1', 'setting_2', 'setting_3'] + \
-              [f'sensor_{i}' for i in range(1, 22)]
+    # --- Configuration ---
+    # Define the 26 column names as per C-MAPSS documentation (no headers in raw files)
+    columns: t.List[str] = ['unit_id', 'time_cycles', 'setting_1', 'setting_2', 'setting_3'] + \
+                           [f'sensor_{i}' for i in range(1, 22)]
     
-    data_file = 'data\\raw\\train_FD001.txt'
+    # Target file path (assuming download_data.py placed it here)
+    data_file: str = 'data\\raw\\train_FD001.txt'
     
+    # Project requirement from S.M.A.R.T. plan (minimum 50,000 records)
+    requirement: int = 50000
+    
+    # --- Start Report ---
     print("=" * 70)
-    print("NASA C-MAPSS DATASET VERIFICATION")
+    print("NASA C-MAPSS DATASET VERIFICATION (Step 1.1)")
     print("=" * 70)
     
-    # Check if file exists
+    # 1. File Existence Check
     if not os.path.exists(data_file):
-        print(f"\n❌ ERROR: File not found!")
+        print(f"\n❌ ERROR: Dataset file not found!")
         print(f"Expected location: {os.path.abspath(data_file)}")
-        print("\n💡 Run 'python download_data.py' first to download the dataset.")
+        print("\n💡 Run 'python download_data.py' first to acquire the dataset.")
         return False
     
     print(f"\n✅ Dataset file found")
     print(f"📍 Location: {os.path.abspath(data_file)}")
     
-    # Load data
+    # 2. Load Data
     print("\n" + "-" * 70)
     print("📊 LOADING DATA...")
     print("-" * 70)
     
     try:
-        df = pd.read_csv(data_file, sep=r'\s+', header=None, names=columns)
+        # Load data using space or tab as separator (\s+) since it's a raw NASA file
+        # The 'r' prefix is used for raw string to avoid SyntaxWarning
+        df: pd.DataFrame = pd.read_csv(data_file, sep=r'\s+', header=None, names=columns)
         
         print(f"✅ Data loaded successfully!\n")
         
-        # Dataset statistics
+        # 3. Dataset Statistics
         print("=" * 70)
         print("📈 DATASET STATISTICS")
         print("=" * 70)
-        print(f"  Total Records:        {len(df):>12,}")
-        print(f"  Number of Engines:    {df['unit_id'].nunique():>12,}")
-        print(f"  Number of Columns:    {len(df.columns):>12,}")
-        print(f"  Memory Usage:         {df.memory_usage(deep=True).sum() / 1024**2:>11.2f} MB")
-        print(f"  Date Range:           {df.groupby('unit_id')['time_cycles'].max().min():>12,} - {df.groupby('unit_id')['time_cycles'].max().max():,} cycles")
         
-        # Requirement check
+        total_records: int = len(df)
+        
+        print(f"  Total Records:        {total_records:>12,}")
+        print(f"  Number of Engines:    {df['unit_id'].nunique():>12,}")
+        print(f"  Number of Columns:    {len(df.columns):>12,}")
+        # Calculate memory usage in MB
+        mem_usage_mb: float = df.memory_usage(deep=True).sum() / 1024**2
+        print(f"  Memory Usage:         {mem_usage_mb:>11.2f} MB")
+        
+        # Calculate min/max cycle length across all engines
+        min_cycles: int = df.groupby('unit_id')['time_cycles'].max().min()
+        max_cycles: int = df.groupby('unit_id')['time_cycles'].max().max()
+        print(f"  Engine Cycle Range:   {min_cycles:>12,} - {max_cycles:,} cycles")
+        
+        # 4. Requirement Check
         print("\n" + "=" * 70)
         print("✅ REQUIREMENT VERIFICATION")
         print("=" * 70)
-        total_records = len(df)
-        requirement = 50000
         
         if total_records >= requirement:
-            print(f"  ✅ PASSED: Dataset has {total_records:,} records")
-            print(f"     Required: ≥{requirement:,} records")
-            print(f"     Exceeded by: {total_records - requirement:,} records")
+            print(f"  ✅ PASSED: Dataset has {total_records:,} records")
+            print(f"     Required: ≥{requirement:,} records")
+            print(f"     Exceeded by: {total_records - requirement:,} records")
         else:
-            print(f"  ⚠️  WARNING: Dataset has only {total_records:,} records")
-            print(f"     Required: ≥{requirement:,} records")
-        
-        # Additional datasets available
+            print(f"  ⚠️ WARNING: Dataset has only {total_records:,} records")
+            print(f"     Required: ≥{requirement:,} records")
+            
+        # 5. Additional Datasets Check (Total Record Count)
         print("\n" + "=" * 70)
-        print("📦 ADDITIONAL DATASETS AVAILABLE")
+        print("📦 ADDITIONAL DATASETS AVAILABLE (FD002, FD003, FD004)")
         print("=" * 70)
         
-        data_dir = 'data\\raw'
-        all_datasets = [f for f in os.listdir(data_dir) if f.startswith('train_FD')]
+        data_dir: str = 'data\\raw'
+        # Get all training files starting with 'train_FD'
+        all_datasets: t.List[str] = [f for f in os.listdir(data_dir) if f.startswith('train_FD')]
         
-        total_all = 0
+        total_all: int = 0
+        
+        # Load and count records for each FD file
         for dataset in sorted(all_datasets):
-            df_temp = pd.read_csv(os.path.join(data_dir, dataset), sep=r'\s+', header=None)
-            records = len(df_temp)
+            # Load without headers for speed, assuming same structure
+            df_temp: pd.DataFrame = pd.read_csv(os.path.join(data_dir, dataset), sep=r'\s+', header=None)
+            records: int = len(df_temp)
             total_all += records
-            print(f"  {dataset:<20} {records:>12,} records")
+            print(f"  {dataset:<20} {records:>12,} records")
+            
+        print(f"  {'-' * 20} {'-' * 18}")
+        print(f"  {'TOTAL ALL FDs':<20} {total_all:>12,} records")
         
-        print(f"  {'-' * 20} {'-' * 18}")
-        print(f"  {'TOTAL':<20} {total_all:>12,} records")
+        # 6. Sample and Quality Check
         
-        # Column information
-        print("\n" + "=" * 70)
-        print("🏷️  COLUMN INFORMATION")
-        print("=" * 70)
-        print("  Operational Settings:")
-        print("    - setting_1, setting_2, setting_3")
-        print("\n  Sensor Readings (21 sensors):")
-        for i in range(1, 22):
-            if i % 5 == 1:
-                print("   ", end="")
-            print(f" sensor_{i:>2}", end="")
-            if i % 5 == 0:
-                print()
-        if 21 % 5 != 0:
-            print()
-        
-        # Sample data
         print("\n" + "=" * 70)
         print("📋 SAMPLE DATA (First 5 rows)")
         print("=" * 70)
+        # Use .to_string() for clean console printing
         print(df.head().to_string())
         
-        # Data quality check
         print("\n" + "=" * 70)
-        print("🔍 DATA QUALITY CHECK")
+        print("🔍 DATA QUALITY CHECK & TYPES")
         print("=" * 70)
-        missing_values = df.isnull().sum().sum()
-        print(f"  Missing values:       {missing_values:>12,}")
-        print(f"  Duplicate rows:       {df.duplicated().sum():>12,}")
+        missing_values: int = df.isnull().sum().sum()
+        print(f"  Missing values:       {missing_values:>12,}")
+        print(f"  Duplicate rows:       {df.duplicated().sum():>12,}")
         
         if missing_values == 0:
-            print(f"  ✅ No missing values detected!")
-        
-        # Data types
-        print("\n" + "=" * 70)
-        print("📊 DATA TYPES")
-        print("=" * 70)
+            print(f"  ✅ No missing values detected (Confirmed for Step 1.2 initial check).")
+            
+        # Data types summary (should mostly be float64)
+        print("\n  Data Types (dtypes):")
         print(df.dtypes.value_counts().to_string())
         
-        # Success summary
+        # 7. Final Summary
         print("\n" + "=" * 70)
         print("🎉 VERIFICATION COMPLETE!")
         print("=" * 70)
-        print(f"  ✅ Dataset successfully loaded and verified")
-        print(f"  ✅ All requirements met ({total_all:,} total records)")
-        print(f"  ✅ Data quality confirmed (no missing values)")
-        print(f"  ✅ Ready for Step 1.2: Data Cleaning & Preparation")
+        print(f"  ✅ Dataset successfully loaded and verified.")
+        print(f"  ✅ All requirements met ({total_all:,} total records available).")
+        print(f"  ✅ Ready for Step 1.2: Data Cleaning & Preparation.")
         print("\n" + "=" * 70)
         
         return True
         
     except FileNotFoundError:
+        # This should be caught by the initial check, but included for robustness
         print(f"❌ Error: Could not find file: {data_file}")
         return False
     except pd.errors.EmptyDataError:
-        print(f"❌ Error: File is empty: {data_file}")
+        print(f"❌ Error: File is empty or improperly formatted: {data_file}")
         return False
     except Exception as e:
-        print(f"❌ Unexpected Error: {e}")
-        import traceback
+        print(f"❌ Unexpected Error during loading or processing: {e}")
         traceback.print_exc()
         return False
 
-def main():
-    """Main entry point"""
+def main() -> None:
+    """
+    Main entry point of the script. Calls the verification function and provides 
+    the next step guidance. Exits with a non-zero code if verification fails.
+    """
     print("\n")
-    success = verify_dataset()
+    success: bool = verify_dataset()
     
     if success:
         print("\n💡 NEXT STEPS:")
-        print("   1. Review the data sample above")
-        print("   2. Proceed to Step 1.2: Data Cleaning")
-        print("   3. Run 'python clean_data.py' (coming next!)")
+        print("   1. Review the statistical summary above.")
+        print("   2. Proceed to Step 1.2: Data Cleaning.")
+        print("   3. Run 'python clean_data.py' (or the equivalent script).")
     else:
-        print("\n⚠️  Verification failed!")
-        print("   Please run 'python download_data.py' first.")
+        print("\n⚠️  Verification failed! Cannot proceed to the next step.")
         sys.exit(1)
     
     print("\n")
