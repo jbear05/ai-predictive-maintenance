@@ -37,9 +37,10 @@
 
 **End of day (9pm-12am):**
 - Added .gitignore to repository
+- All changes staged and committed to repository
 
 ### Decisions
-- 
+- Just followed the plan for today
 
 ### Problems/Solutions
 -  Long file path when installing dependencies to venv
@@ -49,3 +50,4 @@
     
 
 ### Tomorrow's Plan
+- Clean dataset by removing null values, handling outliers (>3 std dev), and normalizing sensor readings to 0-1 scale
