@@ -64,7 +64,7 @@
 - clean_data.py created
 - In file documentation updated
 
-**Afternoon (4pm-???pm):**
+**Afternoon-Evening (4pm-10pm):**
 - clean_data and verify_data now go through all files instead of a specific one
 - data_prep_features.py created to split data into an 80/20 split of train/validation data
 - data quality report and feature documentation generated
@@ -82,3 +82,24 @@
 ### Tomorrow's Plan
 - Set up Python environment with required libraries and train baseline Logistic Regression + Random Forest models
 - Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
+
+
+## Day 4
+
+### Goals for Today
+- Learn more about pandas and numpy
+- Set up Python environment with required libraries and train baseline Logistic Regression + Random Forest models
+- Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
+
+### What I Did
+**Afternoon (1pm-5pm):**
+- Reviewed my code for data prep and dived into how pandas and numpy work for a further understanding on what I am doing with my python scripts.
+
+### Decisions
+- 
+
+### Problems/Solutions
+-  
+
+### Tomorrow's Plan
+- 
