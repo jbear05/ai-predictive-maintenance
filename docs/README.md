@@ -13,7 +13,7 @@ git clone https://github.com/yourusername/ai-predictive-maintenance
 # Install dependencies
 pip install -r requirements.txt
 
-# Run demo
+# Run demo -> coming soon!!
 python src/main.py
 ```
 
@@ -39,7 +39,7 @@ ai-predictive-maintenance/
 - Air-gapped deployment capable
 
 ## Requirements
-- Python 3.11+
+- Python 3.12+
 - See `requirements.txt` for packages
 
 ## License
