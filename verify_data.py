@@ -19,7 +19,7 @@ def verify_dataset() -> bool:
     Returns
     -------
     bool
-        True if the file is found, loaded, and verification is complete, False otherwise.
+        True if the files are found, loaded, and verification is complete, False otherwise.
     """
     
     # --- Configuration ---
@@ -27,8 +27,8 @@ def verify_dataset() -> bool:
     columns: t.List[str] = ['unit_id', 'time_cycles', 'setting_1', 'setting_2', 'setting_3'] + \
                            [f'sensor_{i}' for i in range(1, 22)]
     
-    # Target file path (assuming download_data.py placed it here)
-    data_file: str = 'data\\raw\\train_FD001.txt'
+    # Target directory containing all FD files
+    data_dir: str = 'data\\raw'
     
     # Project requirement from S.M.A.R.T. plan (minimum 50,000 records)
     requirement: int = 50000
@@ -38,27 +38,39 @@ def verify_dataset() -> bool:
     print("NASA C-MAPSS DATASET VERIFICATION (Step 1.1)")
     print("=" * 70)
     
-    # 1. File Existence Check
-    if not os.path.exists(data_file):
-        print(f"\n❌ ERROR: Dataset file not found!")
-        print(f"Expected location: {os.path.abspath(data_file)}")
+        # 1. File Existence Check
+    data_dir: str = 'data\\raw'
+    train_files: t.List[str] = [f for f in os.listdir(data_dir) if f.startswith('train_FD') and f.endswith('.txt')]
+
+    if not train_files:
+        print(f"\n❌ ERROR: No training dataset files found!")
+        print(f"Expected location: {os.path.abspath(data_dir)}")
         print("\n💡 Run 'python download_data.py' first to acquire the dataset.")
         return False
-    
-    print(f"\n✅ Dataset file found")
-    print(f"📍 Location: {os.path.abspath(data_file)}")
-    
-    # 2. Load Data
+
+    print(f"\n✅ Found {len(train_files)} dataset file(s)")
+    for f in sorted(train_files):
+        print(f"   📄 {f}")
+    print(f"📍 Location: {os.path.abspath(data_dir)}")
+
+    # 2. Load and Combine All Data
     print("\n" + "-" * 70)
-    print("📊 LOADING DATA...")
+    print("📊 LOADING ALL DATASETS...")
     print("-" * 70)
-    
+
     try:
-        # Load data using space or tab as separator (\s+) since it's a raw NASA file
-        # The 'r' prefix is used for raw string to avoid SyntaxWarning
-        df: pd.DataFrame = pd.read_csv(data_file, sep=r'\s+', header=None, names=columns)
+        all_dfs: t.List[pd.DataFrame] = []
         
-        print(f"✅ Data loaded successfully!\n")
+        for train_file in sorted(train_files):
+            file_path: str = os.path.join(data_dir, train_file)
+            df_temp: pd.DataFrame = pd.read_csv(file_path, sep=r'\s+', header=None, names=columns)
+            df_temp['source_file'] = train_file  # Track which file each record came from
+            all_dfs.append(df_temp)
+            print(f"   ✅ Loaded {train_file}: {len(df_temp):,} records")
+        
+        # Combine all datasets
+        df: pd.DataFrame = pd.concat(all_dfs, ignore_index=True)
+        print(f"\n✅ All data combined successfully!\n")
         
         # 3. Dataset Statistics
         print("=" * 70)
@@ -92,29 +104,8 @@ def verify_dataset() -> bool:
             print(f"  ⚠️ WARNING: Dataset has only {total_records:,} records")
             print(f"     Required: ≥{requirement:,} records")
             
-        # 5. Additional Datasets Check (Total Record Count)
-        print("\n" + "=" * 70)
-        print("📦 ADDITIONAL DATASETS AVAILABLE (FD002, FD003, FD004)")
-        print("=" * 70)
         
-        data_dir: str = 'data\\raw'
-        # Get all training files starting with 'train_FD'
-        all_datasets: t.List[str] = [f for f in os.listdir(data_dir) if f.startswith('train_FD')]
-        
-        total_all: int = 0
-        
-        # Load and count records for each FD file
-        for dataset in sorted(all_datasets):
-            # Load without headers for speed, assuming same structure
-            df_temp: pd.DataFrame = pd.read_csv(os.path.join(data_dir, dataset), sep=r'\s+', header=None)
-            records: int = len(df_temp)
-            total_all += records
-            print(f"  {dataset:<20} {records:>12,} records")
-            
-        print(f"  {'-' * 20} {'-' * 18}")
-        print(f"  {'TOTAL ALL FDs':<20} {total_all:>12,} records")
-        
-        # 6. Sample and Quality Check
+        # 5. Sample and Quality Check
         
         print("\n" + "=" * 70)
         print("📋 SAMPLE DATA (First 5 rows)")
@@ -141,7 +132,7 @@ def verify_dataset() -> bool:
         print("🎉 VERIFICATION COMPLETE!")
         print("=" * 70)
         print(f"  ✅ Dataset successfully loaded and verified.")
-        print(f"  ✅ All requirements met ({total_all:,} total records available).")
+        print(f"  ✅ All requirements met ({total_records:,} total records available).")
         print(f"  ✅ Ready for Step 1.2: Data Cleaning & Preparation.")
         print("\n" + "=" * 70)
         
@@ -149,10 +140,10 @@ def verify_dataset() -> bool:
         
     except FileNotFoundError:
         # This should be caught by the initial check, but included for robustness
-        print(f"❌ Error: Could not find file: {data_file}")
+        print(f"❌ Error: Could not find file")
         return False
     except pd.errors.EmptyDataError:
-        print(f"❌ Error: File is empty or improperly formatted: {data_file}")
+        print(f"❌ Error: File is empty or improperly formatted")
         return False
     except Exception as e:
         print(f"❌ Unexpected Error during loading or processing: {e}")
