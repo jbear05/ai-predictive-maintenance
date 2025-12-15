@@ -164,9 +164,20 @@ def main() -> None:
     """
     
     # --- Configuration ---
-    # Define input and output file paths
-    INPUT_FILE: str = "data\\raw\\train_FD001.txt"
-    OUTPUT_FILE: str = "data\\processed\\train_FD001_cleaned.csv"
+    # Define input and output paths
+    INPUT_DIR: str = "data\\raw"
+    OUTPUT_DIR: str = "data\\processed"
+
+    # Get all train files
+    train_files: t.List[str] = [f for f in os.listdir(INPUT_DIR) if f.startswith('train_FD') and f.endswith('.txt')]
+
+    if not train_files:
+        print(f"❌ ERROR: No training files found in {INPUT_DIR}")
+        return
+
+    print(f"Found {len(train_files)} training file(s) to process:")
+    for f in sorted(train_files):
+        print(f"  📄 {f}")
     
     # Define the column names for C-MAPSS FD001 dataset
     COLUMN_NAMES: t.List[str] = [
@@ -178,34 +189,47 @@ def main() -> None:
         'sensor_19', 'sensor_20', 'sensor_21'
     ]
 
-    print("--- Starting Step 1.2: Data Cleaning and Normalization ---")
+    print("\n--- Starting Step 1.2: Data Cleaning and Normalization ---")
 
-    # --- 1. Load Data (Completion of Step 1.1) ---
-    try:
-        # Load the raw text file using a raw string for the separator
-        df_raw: pd.DataFrame = pd.read_csv(INPUT_FILE, sep=r'\s+', header=None, names=COLUMN_NAMES)
-        print(f"Successfully loaded {INPUT_FILE} with {len(df_raw)} records.")
-    except FileNotFoundError:
-        print(f"❌ ERROR: Input file '{INPUT_FILE}' not found. Please run 'download_data.py' first.")
-        return
-    except Exception as e:
-        print(f"❌ An unexpected error occurred during file loading: {e}")
-        return
+    # Create output directory
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    # --- 2. Clean and Normalize Data (Step 1.2 execution) ---
-    df_clean_norm: pd.DataFrame = clean_dataset(df_raw)
+    # Process each file
+    for train_file in sorted(train_files):
+        print("\n" + "="*70)
+        print(f"PROCESSING: {train_file}")
+        print("="*70)
+        
+        INPUT_FILE: str = os.path.join(INPUT_DIR, train_file)
+        OUTPUT_FILE: str = os.path.join(OUTPUT_DIR, train_file.replace('.txt', '_cleaned.csv'))
+        
+        # --- 1. Load Data ---
+        try:
+            df_raw: pd.DataFrame = pd.read_csv(INPUT_FILE, sep=r'\s+', header=None, names=COLUMN_NAMES)
+            print(f"Successfully loaded {train_file} with {len(df_raw)} records.")
+        except FileNotFoundError:
+            print(f"❌ ERROR: Input file '{INPUT_FILE}' not found.")
+            continue
+        except Exception as e:
+            print(f"❌ An unexpected error occurred during file loading: {e}")
+            continue
 
-    # --- 3. Save Cleaned Data (Preparation for Step 1.3) ---
-    print("\n--- 5. Saving Cleaned Data ---")
-    
-    try:
-        # Save the resulting DataFrame to a new CSV file without the index
-        df_clean_norm.to_csv(OUTPUT_FILE, index=False)
-        print(f"✅ Success: Cleaned and normalized data saved to {OUTPUT_FILE}")
-        print("Ready for Step 1.3: Feature Engineering and Train/Test Split.")
-    except Exception as e:
-        print(f"❌ An error occurred while saving the file: {e}")
-    
+        # --- 2. Clean and Normalize Data ---
+        df_clean_norm: pd.DataFrame = clean_dataset(df_raw)
+
+        # --- 3. Save Cleaned Data ---
+        print("\n--- Saving Cleaned Data ---")
+        
+        try:
+            df_clean_norm.to_csv(OUTPUT_FILE, index=False)
+            print(f"✅ Success: Cleaned data saved to {OUTPUT_FILE}")
+        except Exception as e:
+            print(f"❌ An error occurred while saving the file: {e}")
+
+    print("\n" + "="*70)
+    print("✅ ALL FILES PROCESSED")
+    print("="*70)
+    print("Ready for Step 1.3: Feature Engineering and Train/Test Split.")
     print("--- Step 1.2 Complete ---")
     
 
