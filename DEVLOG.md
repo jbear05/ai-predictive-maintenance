@@ -80,4 +80,5 @@
       Solution: encoding='utf-8'
 
 ### Tomorrow's Plan
-- 
+- Set up Python environment with required libraries and train baseline Logistic Regression + Random Forest models
+- Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
