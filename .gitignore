@@ -79,6 +79,7 @@ $RECYCLE.BIN/
 data/raw/*.txt
 data/raw/*.zip
 data/processed/*.csv
+data/processed/*.txt
 *.h5
 *.hdf5
 
