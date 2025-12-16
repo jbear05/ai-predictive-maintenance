@@ -107,3 +107,25 @@
 - Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
 - Set up Python environment with required libraries and train baseline Logistic Regression + Random Forest models
 - Change data_prep_features so results are sent to new results folder
+
+
+## Day 5
+
+### Goals for Today
+- Learn more about training AI models
+- Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
+- Set up Python environment with required libraries and train baseline Logistic Regression + Random Forest models
+- Change data_prep_features so results are sent to new results folder
+
+### What I Did
+**Afternoon (2pm-5pm):**
+- Sci-kit learn practice
+- Created new notebook for ai analysis
+
+### Decisions
+
+
+### Problems/Solutions
+
+
+### Tomorrow's Plan
