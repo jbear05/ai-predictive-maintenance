@@ -88,18 +88,22 @@
 
 ### Goals for Today
 - Learn more about pandas and numpy
-- Set up Python environment with required libraries and train baseline Logistic Regression + Random Forest models
-- Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
 
 ### What I Did
 **Afternoon (1pm-5pm):**
 - Reviewed my code for data prep and dived into how pandas and numpy work for a further understanding on what I am doing with my python scripts.
 
+**Evening (7pm-11pm):**
+- Continued to review my code and furthered my understanding of pandas and numpy
+
 ### Decisions
-- 
+- Pivoted my working style to learn the technologies I am using better
 
 ### Problems/Solutions
--  
+-  None
 
 ### Tomorrow's Plan
-- 
+- Learn more about training AI models
+- Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
+- Set up Python environment with required libraries and train baseline Logistic Regression + Random Forest models
+- Change data_prep_features so results are sent to new results folder
