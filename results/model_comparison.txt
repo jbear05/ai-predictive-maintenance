@@ -1,0 +1,22 @@
+============================================================
+BASELINE MODEL COMPARISON
+============================================================
+
+LOGISTIC REGRESSION
+----------------------------------------
+Training Time: 483.71 seconds
+Accuracy:      0.7666
+Precision:     0.3077
+Recall:        0.8039
+F1-Score:      0.4451
+
+RANDOM FOREST
+----------------------------------------
+Training Time: 13.22 seconds
+Accuracy:      0.9681
+Precision:     0.9181
+Recall:        0.7974
+F1-Score:      0.8535
+
+============================================================
+WINNER: Random Forest (Better F1-Score)
