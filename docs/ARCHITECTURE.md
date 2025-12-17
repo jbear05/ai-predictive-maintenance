@@ -43,7 +43,28 @@
 - Status: ✅ Complete (Step 1.3)
 
 ### 2. Model Training Layer
-[Not yet implemented - Step 2.1-2.3 pending]
+
+**Baseline Model Training Script** (`train_baseline_models.py`)
+- Trains two baseline models: Logistic Regression and Random Forest
+- Uses pre-split train/val datasets from feature engineering step
+- Handles class imbalance with `class_weight='balanced'`
+- Excludes non-predictive columns: unit_id, source_file, RUL, time_cycles
+- Evaluates models on: accuracy, precision, recall, F1-score
+- Saves trained models: `logistic_model.pkl`, `random_forest_model.pkl`
+- Generates comparison report: `model_comparison.txt`
+- Status: ✅ Complete (Step 2.1)
+
+**Model Performance (Baseline):**
+- Logistic Regression: 76.7% accuracy, 80.4% recall, 30.8% precision, 44.5% F1
+- Random Forest: 96.8% accuracy, 79.7% recall, 91.8% precision, 85.3% F1
+- Training time: Logistic Regression ~8 min, Random Forest ~13 sec
+- Winner: Random Forest (significantly better F1-score)
+
+**XGBoost Training Script** (`train_xgboost.py`)
+[Not yet implemented - Step 2.2 pending]
+
+**Model Selection & Export** (`select_best_model.py`)
+[Not yet implemented - Step 2.3 pending]
 
 ### 3. Inference Layer
 [Not yet implemented - Step 3.1-3.3 pending]

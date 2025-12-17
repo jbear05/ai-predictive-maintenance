@@ -122,10 +122,18 @@
 - Sci-kit learn practice
 - Created new notebook for ai analysis
 
+### What I Did
+**Afternoon-Evening (5pm-10pm):**
+- train_baseline_models.py created and model_comparison.txt generated
+- baseline models are trained with random forest being the baseline to beat
+
 ### Decisions
+- Using random forest model as baseline to beat for XGBoost
 
 
 ### Problems/Solutions
-
+- RUL column in training data was giving AI the answer thus providing false accuracy results
+      Solution: Dropping the column when training gave realistic accuracy results
 
 ### Tomorrow's Plan
+- 
