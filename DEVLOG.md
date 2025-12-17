@@ -57,7 +57,7 @@
 
 ### Goals for Today
 - Clean dataset by removing null values, handling outliers (>3 std dev), and normalizing sensor readings to 0-1 scale
-- Create train/test split (80/20), engineer 12+ features (rolling averages, rate of change, deviation from baseline), and generate binary target variable ("Will fail in next 48 hours?")
+- Create train/test split (80/20), engineer 12+ features (rolling averages, rate of change, deviation from baseline), and generate binary target variable ("Will fail in next 48 cycles?")
 
 ### What I Did
 **Afternoon (12pm-3pm):**
@@ -123,17 +123,27 @@
 - Created new notebook for ai analysis
 
 ### What I Did
-**Afternoon-Evening (5pm-10pm):**
+**Afternoon-Evening (5pm-12am):**
 - train_baseline_models.py created and model_comparison.txt generated
 - baseline models are trained with random forest being the baseline to beat
+- Train XGBoost model with hyperparameter tuning using GridSearchCV across 20+ parameter combinations
 
 ### Decisions
 - Using random forest model as baseline to beat for XGBoost
+- I have decided to keep my prediction window to 48 cycles (not hours) since changing it down to match my initial goal of 48 hour prediction is not possible due to no cycle to time conversion provided in the data.
+      What cycles could mean: 1 Cycle = 1 complete flight
+      The time for this could range from about 1 to 2 weeks in advance
+      This is valuable for ordering parts, scheduling maintenance windoes, route planning around maintenance, etc.
+- Decided to keep data_prep_features results being sent to processed data for now
 
 
 ### Problems/Solutions
 - RUL column in training data was giving AI the answer thus providing false accuracy results
       Solution: Dropping the column when training gave realistic accuracy results
+- Operational Cycles do not directly translate to hours
+      Solution: Address the cycle-to-time conversion issue in my documentation
 
 ### Tomorrow's Plan
-- 
+- Commit train_xgboost_model.py if overnight training worked
+- Update documentation with new xgboost model information
+- Select best performing model, create inference pipeline, save as .pkl file, and generate performance report with confusion matrix, ROC curve, and feature importance charts
