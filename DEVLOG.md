@@ -153,18 +153,18 @@
 ### Goals for Today
 - Commit train_xgboost_model.py if overnight training worked
 - Update documentation with new xgboost model information
-- Select best performing model, create inference pipeline, save as .pkl file, and generate performance report with confusion matrix, ROC curve, and feature importance charts
 
 ### What I Did
 **Evening (7pm-11pm):**
-- 
+- Ensured model was working as planned
+- Committed new script and updated documentation
 
 ### Decisions
-- 
+- None
 
 
 ### Problems/Solutions
-- 
+- None
 
 ### Tomorrow's Plan
-- 
+- Select best performing model, create inference pipeline, save as .pkl file, and generate performance report with confusion matrix, ROC curve, and feature importance charts
