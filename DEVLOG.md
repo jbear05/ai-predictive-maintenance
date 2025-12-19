@@ -122,7 +122,6 @@
 - Sci-kit learn practice
 - Created new notebook for ai analysis
 
-### What I Did
 **Afternoon-Evening (5pm-12am):**
 - train_baseline_models.py created and model_comparison.txt generated
 - baseline models are trained with random forest being the baseline to beat
@@ -147,3 +146,25 @@
 - Commit train_xgboost_model.py if overnight training worked
 - Update documentation with new xgboost model information
 - Select best performing model, create inference pipeline, save as .pkl file, and generate performance report with confusion matrix, ROC curve, and feature importance charts
+
+
+## Day 6
+
+### Goals for Today
+- Commit train_xgboost_model.py if overnight training worked
+- Update documentation with new xgboost model information
+- Select best performing model, create inference pipeline, save as .pkl file, and generate performance report with confusion matrix, ROC curve, and feature importance charts
+
+### What I Did
+**Evening (7pm-11pm):**
+- 
+
+### Decisions
+- 
+
+
+### Problems/Solutions
+- 
+
+### Tomorrow's Plan
+- 

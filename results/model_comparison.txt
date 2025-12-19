@@ -20,3 +20,10 @@ F1-Score:      0.8535
 
 ============================================================
 WINNER: Random Forest (Better F1-Score)
+
+=== XGBOOST MODEL ===
+Best Parameters: {'colsample_bytree': 1.0, 'learning_rate': 0.01, 'max_depth': 3, 'min_child_weight': 1, 'n_estimators': 300, 'subsample': 1.0}
+Accuracy: 0.9547
+Recall: 0.9826
+Precision: 0.7254
+Target Met: YES
