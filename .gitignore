@@ -89,6 +89,7 @@ models/*.h5
 models/*.joblib
 *.pkl
 *.joblib
+*.json
 
 # Logs
 *.log
