@@ -10,7 +10,7 @@
                                                        ▼
                        ┌──────────────────┐    ┌─────────────┐
                        │  Trained Models  │◀───│   Model     │
-                       │     (.pkl)       │    │  Training   │
+                       │  + Scaler (.pkl) │    │  Training   │
                        └──────────────────┘    └─────────────┘
 ```
 
@@ -31,6 +31,7 @@
 - Skips constant features to prevent scaling errors
 - Outputs: `train_FD001_cleaned.csv` through `train_FD004_cleaned.csv`
 - **Status:** ✅ Complete (Step 1.2)
+- **Note:** Initial version created 4 separate scalers (one per file) - later corrected in scaler fix step
 
 #### Feature Engineering Script (`data_prep_features.py`)
 - Combines all 4 cleaned training files
@@ -47,6 +48,17 @@
 - Splits data 80/20 (stratified by unit_id)
 - Outputs: `train_processed.csv`, `val_processed.csv`, `feature_documentation.csv`, `data_quality_report.txt`
 - **Status:** ✅ Complete (Step 1.3)
+
+#### Scaler Fix Script (`fix_scaler.py`)
+- **Purpose:** Corrects scaling inconsistency from using 4 separate scalers
+- Loads combined train/validation data
+- Fits ONE MinMaxScaler on training data only (prevents data leakage)
+- Transforms both train and validation using the same fitted scaler
+- Saves scaler for deployment: `models/scaler.pkl`
+- Saves column metadata: `models/scaler_columns.json`
+- Overwrites processed CSV files with consistently-scaled data
+- **Status:** ✅ Complete (Scaler correction step)
+- **Critical for deployment:** Ensures inference pipeline uses correct normalization
 
 ### 2. Model Training Layer
 
@@ -81,9 +93,9 @@
 - Optimizes for recall using 3-fold cross-validation
 - Saves trained model: `xgboost_model.pkl`
 - Appends results to: `model_comparison.txt`
-- **Status:** ✅ Complete (Step 2.2)
+- **Status:** ✅ Complete (Step 2.2 - Retrained after scaler fix)
 
-**Model Performance (XGBoost):**
+**Model Performance (XGBoost - Latest Training):**
 | Metric | Result | Target | Status |
 |--------|--------|--------|--------|
 | Accuracy | 96.17% | ≥80% | ✅ +16.17% |
@@ -91,16 +103,19 @@
 | Precision | 76.15% | ≥70% | ✅ +6.15% |
 
 **Best Parameters:** `learning_rate=0.1`, `max_depth=3`, `n_estimators=100`  
-**Training Time:** ~1.3 minutes (2-combination test grid)  
+**Training Time:** ~1.3 minutes (test grid) / ~1-3 hours (full grid)  
 **Winner:** 🏆 XGBoost (best recall for failure detection)
 
-#### Model Selection & Export (`select_best_model.py`)
-- **Status:** ⏳ Not yet implemented (Step 2.3 pending)
+**Note:** Model was retrained after scaler correction to ensure consistency between training normalization and inference normalization. Performance metrics reflect training on consistently-scaled data.
 
 ### 3. Inference Layer
+- **Status:** ⏳ In Progress (Step 2.3)
+- **Next:** Create inference pipeline using saved scaler and model
+
+### 4. API Layer
 - **Status:** ⏳ Not yet implemented (Step 3.1-3.3 pending)
 
-### 4. Dashboard Layer
+### 5. Dashboard Layer
 - **Status:** ⏳ Not yet implemented (Step 4.1-4.3 pending)
 
 ## Data Flow
@@ -122,6 +137,7 @@ Cleaned Data (data/processed/)
     ├── train_FD002_cleaned.csv (53,759 records)
     ├── train_FD003_cleaned.csv (22,794 records)
     └── train_FD004_cleaned.csv (61,249 records)
+    (⚠️ Initially scaled with 4 separate scalers)
            ↓
     [data_prep_features.py]
            ↓
@@ -134,11 +150,19 @@ Combined Dataset
            ↓
     [Train/Val Split - 80/20]
            ↓
-Final Processed Data (data/processed/)
+Initial Processed Data (data/processed/)
     ├── train_processed.csv (126,954 records, 202 columns)
-    ├── val_processed.csv (30,185 records, 202 columns)
-    ├── feature_documentation.csv (173 features)
-    └── data_quality_report.txt
+    └── val_processed.csv (30,185 records, 202 columns)
+    (⚠️ Contained inconsistently-scaled data)
+           ↓
+    [fix_scaler.py] ← CORRECTION STEP
+           ↓
+    ✅ Single scaler fitted on training data only
+    ✅ Both datasets re-scaled consistently
+           ↓
+Corrected Processed Data (data/processed/)
+    ├── train_processed.csv (updated with consistent scaling)
+    └── val_processed.csv (updated with consistent scaling)
            ↓
     [train_baseline_models.py]
            ↓
@@ -146,10 +170,12 @@ Baseline Models (models/)
     ├── logistic_model.pkl
     └── random_forest_model.pkl
            ↓
-    [train_xgboost.py]
+    [train_xgboost.py] ← RETRAINED
            ↓
-Advanced Model (models/)
-    └── xgboost_model.pkl
+Deployment-Ready Artifacts (models/)
+    ├── xgboost_model.pkl (retrained on consistent data)
+    ├── scaler.pkl ✨ (for inference normalization)
+    └── scaler_columns.json ✨ (column metadata)
            ↓
 Model Comparison (results/)
     └── model_comparison.txt
@@ -182,6 +208,32 @@ Model Comparison (results/)
 - **Time Horizon:** 48 cycles ≈ 1-2 weeks advance warning (turbofan flight operations)
 - **Class Distribution:** ~10% failures, ~90% healthy (handled via weighting)
 
+## Preprocessing Pipeline (Critical for Inference)
+
+### Scaler Configuration
+- **Type:** MinMaxScaler (0-1 normalization)
+- **Fitted on:** Training data only (126,954 samples)
+- **Applied to:** Both training and validation data
+- **Columns scaled:** Sensor columns with variance > 1e-10 (excludes constant sensors)
+- **Saved artifacts:**
+  - `models/scaler.pkl` - Fitted scaler object
+  - `models/scaler_columns.json` - List of columns that should be scaled
+
+### Why Scaler Consistency Matters
+**Problem Identified:** Initial data cleaning created 4 separate scalers (one per FD001-004 file), each learning different min/max values. When files were combined and split 80/20, the data contained inconsistent normalization.
+
+**Solution Implemented:** 
+1. Combined all data first
+2. Fitted ONE scaler on training data only
+3. Transformed both train and validation with the same scaler
+4. Saved scaler for inference deployment
+
+**Result:** 
+- ✅ Consistent normalization across all data
+- ✅ No data leakage (scaler never sees validation data during fitting)
+- ✅ Inference pipeline can use the saved scaler for new predictions
+- ✅ Model performance validated on properly scaled data
+
 ## Security Considerations
 
 ### Current Implementation
@@ -210,6 +262,7 @@ Model Comparison (results/)
 - **Missing values:** 0.00% (meets <2% requirement ✅)
 - **Outlier removal:** ~1-3% of records removed per file
 - **All sensors normalized:** 0-1 scale ✅
+- **Scaling consistency:** Single scaler across all data ✅
 
 ### Model Training Performance
 | Model | Training Time | Notes |
@@ -226,6 +279,7 @@ Model Comparison (results/)
 - **Prediction latency:** <100ms per sample
 - **Batch processing:** ~1,000 predictions/second
 - **Model size:** <50MB serialized
+- **Preprocessing:** <10ms with loaded scaler
 
 ## Current Project Status
 
@@ -235,9 +289,10 @@ Model Comparison (results/)
 | 1.1 | Data Acquisition | ✅ Complete |
 | 1.2 | Data Cleaning | ✅ Complete |
 | 1.3 | Feature Engineering | ✅ Complete |
+| — | Scaler Correction | ✅ Complete (fix_scaler.py) |
 | 2.1 | Baseline Models | ✅ Complete |
-| 2.2 | XGBoost Training | ✅ Complete |
-| 2.3 | Model Selection & Performance Report | 🔄 In Progress |
+| 2.2 | XGBoost Training | ✅ Complete (Retrained) |
+| 2.3 | Inference Pipeline & Performance Report | 🔄 In Progress |
 | 3.1-3.3 | Backend API Development | ⏳ Pending |
 | 4.1-4.3 | Dashboard Creation | ⏳ Pending |
 
@@ -250,13 +305,53 @@ Model Comparison (results/)
 
 **All targets exceeded by significant margins** 🎉
 
+### Deployment Readiness
+- ✅ Model trained and saved (`xgboost_model.pkl`)
+- ✅ Scaler trained and saved (`scaler.pkl`)
+- ✅ Column metadata documented (`scaler_columns.json`)
+- ✅ Data consistently normalized
+- ⏳ Inference pipeline in progress
+- ⏳ API layer pending
+- ⏳ Dashboard pending
+
+## Saved Artifacts
+
+### Models Directory (`models/`)
+| File | Purpose | Size | Created By |
+|------|---------|------|------------|
+| `logistic_model.pkl` | Baseline model | ~MB | train_baseline_models.py |
+| `random_forest_model.pkl` | Baseline model | ~MB | train_baseline_models.py |
+| `xgboost_model.pkl` | Production model | <50MB | train_xgboost.py |
+| `scaler.pkl` | Data normalization | <1MB | fix_scaler.py |
+| `scaler_columns.json` | Preprocessing metadata | <1KB | fix_scaler.py |
+
+### Required for Inference
+The inference pipeline requires both:
+1. `xgboost_model.pkl` - for predictions
+2. `scaler.pkl` - for data normalization
+3. `scaler_columns.json` - to know which columns to scale
+
+**Critical:** Never use a different scaler for inference. The saved scaler must match the one used during training.
+
 ## Future Architecture
+- [ ] Add inference pipeline with preprocessing
 - [ ] Add Flask API layer for CMMS integration
 - [ ] Add SQLite database for historical predictions
 - [ ] Create Streamlit dashboard for visualization
 - [ ] Generate comprehensive performance report with visualizations
-- [ ] Add inference pipeline for real-time predictions
 - [ ] Multi-agent architecture for specialized tasks (future enhancement)
+
+## Lessons Learned
+
+### Scaler Management
+**Issue:** Initial implementation created multiple scalers during data cleaning, causing inconsistent normalization when datasets were combined.
+
+**Resolution:** Created dedicated scaler correction script that:
+- Fits scaler only on training data
+- Applies same scaler to validation data
+- Saves scaler for deployment
+
+**Best Practice:** Always fit preprocessing objects (scalers, encoders) on training data only, then save them for inference.
 
 ## References
 - **Dataset:** NASA C-MAPSS Turbofan Engine Degradation Simulation

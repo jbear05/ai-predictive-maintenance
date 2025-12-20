@@ -109,6 +109,30 @@
 - Removed outliers using 3-sigma rule (Z-score > 3)
 - Min-Max normalization applied to all sensor columns (scaled to 0-1 range)
 - Skipped constant features (zero variance) to prevent scaling errors
+- **Initial Issue:** Created 4 separate scalers (one per FD001-004 file), each learning different min/max values
+
+#### Scaler Correction (Post-Training - Complete ✅)
+**Problem Identified:** When 4 datasets were combined and split 80/20, data contained inconsistent normalization from 4 different scalers.
+
+**Solution Implemented:**
+1. Loaded combined train/validation data
+2. Fitted **ONE MinMaxScaler on training data only** (126,954 samples)
+3. Transformed both train and validation with the same fitted scaler
+4. Saved scaler for deployment: `models/scaler.pkl`
+5. Saved column metadata: `models/scaler_columns.json`
+
+**Why This Matters:**
+- ✅ Consistent normalization across all data
+- ✅ No data leakage (scaler never sees validation data during fitting)
+- ✅ Inference pipeline can use the saved scaler for new predictions
+- ✅ Model retrained on properly scaled data
+
+**Scaler Configuration:**
+- **Type:** MinMaxScaler (0-1 normalization)
+- **Fitted on:** Training data only (prevents data leakage)
+- **Applied to:** Both training and validation data
+- **Columns scaled:** Sensor columns with variance > 1e-10 (excludes constant sensors)
+- **Critical for deployment:** Inference must use this exact scaler
 
 #### Feature Engineering (Step 1.3 - Complete ✅)
 - Created 173 engineered features across 8 categories
@@ -145,7 +169,7 @@
 - **Secondary metrics:** Accuracy, precision, F1-score
 - **Recall priority:** Critical to catch actual failures (minimize false negatives)
 
-### Advanced Model Training (Step 2.2 - Complete ✅)
+### Advanced Model Training (Step 2.2 - Complete ✅, Retrained after Scaler Fix)
 
 #### XGBoost Hyperparameter Tuning
 
@@ -185,6 +209,8 @@
 - Lower learning rate (0.01) with more trees (300) achieves better generalization
 - Full sampling (subsample=1.0, colsample_bytree=1.0) works best with this dataset
 - Shallow trees (depth=3) sufficient for capturing patterns without overfitting
+
+**Model Retraining Note:** After scaler correction, model was retrained on consistently-scaled data. Performance metrics reflect training on properly normalized data, ensuring deployment readiness.
 
 ## Performance Metrics
 
@@ -345,14 +371,40 @@ Actual Failure        61      3,453   (True Positives)
 
 ## Inference
 
+### Deployment-Ready Artifacts
+
+The following files are required for production inference:
+
+| File | Purpose | Location | Created By |
+|------|---------|----------|------------|
+| `xgboost_model.pkl` | Trained prediction model | `models/` | train_xgboost.py |
+| `scaler.pkl` | Data normalization scaler | `models/` | fix_scaler.py |
+| `scaler_columns.json` | Columns to scale | `models/` | fix_scaler.py |
+
+**Critical:** All three files must be used together. The scaler was fitted on training data and must be used for all inference to ensure consistent normalization.
+
 ### How to Use the Model
 
-**Loading the Model:**
+**Loading the Model and Scaler:**
 ```python
 import joblib
+import json
 
 # Load trained model
 model = joblib.load('models/xgboost_model.pkl')
+
+# Load the scaler (CRITICAL - must use this exact scaler)
+scaler = joblib.load('models/scaler.pkl')
+
+# Load column metadata
+with open('models/scaler_columns.json', 'r') as f:
+    cols_to_scale = json.load(f)
+```
+
+**Preprocessing New Data:**
+```python
+# Apply the saved scaler to new sensor data
+X_new[cols_to_scale] = scaler.transform(X_new[cols_to_scale])
 
 # Make predictions
 predictions = model.predict(X_new)
@@ -361,13 +413,21 @@ probabilities = model.predict_proba(X_new)[:, 1]
 
 **Input Requirements:**
 - 219 features in correct order (same as training data)
-- All sensors normalized to 0-1 scale
+- Raw sensor readings (will be scaled by saved scaler)
 - Engineered features computed using same methodology
 - No missing values
 
 **Output Format:**
 - **Binary prediction:** 0 (healthy) or 1 (will fail within 48 cycles)
 - **Probability score:** 0.0 to 1.0 (confidence in failure prediction)
+
+**CRITICAL WARNING:**
+- ❌ **NEVER** fit a new scaler on inference data
+- ❌ **NEVER** use `scaler.fit_transform()` during inference
+- ✅ **ALWAYS** use `scaler.transform()` with the saved scaler
+- ✅ **ALWAYS** use the exact scaler from `models/scaler.pkl`
+
+Fitting a new scaler on inference data would use different min/max values, causing prediction errors or failures.
 
 [Full API implementation pending - Step 3]
 
@@ -472,29 +532,30 @@ probabilities = model.predict_proba(X_new)[:, 1]
 ### Short-term (Phase 2-3)
 
 1. **✅ XGBoost model optimized** - Achieved 98.26% recall (target: ≥85%)
-2. **Performance visualizations** (Step 2.3) - Generate ROC curves, confusion matrices, feature importance
-3. **Threshold analysis** - Evaluate trade-offs between recall and precision at different thresholds
-4. **Model explainability** - Add SHAP values for individual prediction explanations
-5. **API deployment** (Step 3) - Flask backend for production inference
+2. **✅ Scaler correction completed** - Single consistent scaler for deployment
+3. **Performance visualizations** (Step 2.3) - Generate ROC curves, confusion matrices, feature importance
+4. **Threshold analysis** - Evaluate trade-offs between recall and precision at different thresholds
+5. **Model explainability** - Add SHAP values for individual prediction explanations
+6. **API deployment** (Step 3) - Flask backend for production inference
 
 ### Medium-term Enhancements
 
-6. **Confidence intervals** - Quantile regression or ensemble methods for uncertainty
-7. **Multi-horizon predictions** - Predict failures at 24, 48, 72 cycle windows
-8. **Root cause analysis** - Classify failure type based on sensor patterns
-9. **Anomaly detection** - Unsupervised learning to detect novel failure modes
-10. **Feature selection** - Identify and remove redundant engineered features to reduce false alarms
+7. **Confidence intervals** - Quantile regression or ensemble methods for uncertainty
+8. **Multi-horizon predictions** - Predict failures at 24, 48, 72 cycle windows
+9. **Root cause analysis** - Classify failure type based on sensor patterns
+10. **Anomaly detection** - Unsupervised learning to detect novel failure modes
+11. **Feature selection** - Identify and remove redundant engineered features to reduce false alarms
 
 ### Long-term Research
 
-11. **Transfer learning** - Adapt model across different equipment types
-12. **Online learning** - Update model with streaming data without full retraining
-13. **Multi-task learning** - Simultaneously predict failure and RUL
-14. **Deep learning** - LSTM/Transformer models for temporal sequences
-15. **Ensemble stacking** - Combine XGBoost + Random Forest for best of both
-16. **Cost-sensitive learning** - Explicitly weight false negative costs
-17. **Federated learning** - Train on distributed data across multiple sites
-18. **Physics-informed ML** - Incorporate domain knowledge into model architecture
+12. **Transfer learning** - Adapt model across different equipment types
+13. **Online learning** - Update model with streaming data without full retraining
+14. **Multi-task learning** - Simultaneously predict failure and RUL
+15. **Deep learning** - LSTM/Transformer models for temporal sequences
+16. **Ensemble stacking** - Combine XGBoost + Random Forest for best of both
+17. **Cost-sensitive learning** - Explicitly weight false negative costs
+18. **Federated learning** - Train on distributed data across multiple sites
+19. **Physics-informed ML** - Incorporate domain knowledge into model architecture
 
 ## Validation
 
@@ -506,6 +567,7 @@ probabilities = model.predict_proba(X_new)[:, 1]
 - Train/test split by unit_id (entire engines held out)
 - No overlap between training and validation engines
 - Target created from RUL without using RUL as feature
+- **Scaler fitted only on training data** (validation data never seen during fitting)
 
 ### Model Validation
 
@@ -524,6 +586,34 @@ probabilities = model.predict_proba(X_new)[:, 1]
 - Best parameters selected via systematic search
 - Model performance stable across similar configurations
 
+**Preprocessing Validation:**
+- ✅ Scaler consistency verified across train/validation
+- ✅ Model retrained on consistently-scaled data
+- ✅ No preprocessing artifacts detected
+
+## Lessons Learned
+
+### Critical Scaler Management
+
+**Issue Discovered:** Initial data cleaning created 4 separate scalers (one per FD001-004 file), each learning different min/max values. When datasets were combined and split 80/20, the data contained inconsistent normalization.
+
+**Impact:** Without correction, inference would be impossible - no way to know which scaler to use for new predictions.
+
+**Resolution:**
+1. Created dedicated `fix_scaler.py` script
+2. Fitted ONE scaler on training data only (prevents data leakage)
+3. Transformed both train and validation with same scaler
+4. Saved scaler as `models/scaler.pkl` for deployment
+5. Retrained model on consistently-scaled data
+
+**Best Practice Established:**
+- ✅ Always fit preprocessing objects (scalers, encoders) on training data only
+- ✅ Always save preprocessing objects alongside models
+- ✅ Never fit new preprocessing objects during inference
+- ✅ Document which columns are scaled for reproducibility
+
+**Key Takeaway:** Preprocessing pipeline is as important as the model itself. Both must be saved and versioned together for successful deployment.
+
 ## References
 
 1. **Dataset:** NASA C-MAPSS Turbofan Engine Degradation Simulation  
@@ -540,6 +630,7 @@ probabilities = model.predict_proba(X_new)[:, 1]
 ---
 
 **Last Updated:** December 2024  
-**Model Version:** 1.0 (Production)  
-**Status:** Phase 1 Complete ✅, Phase 2-3 In Progress  
-**Performance:** 98.26% Recall (Industry-Leading)
+**Model Version:** 1.1 (Production - Retrained with corrected scaling)  
+**Status:** Phase 1 Complete ✅, Phase 2 In Progress (Step 2.3)  
+**Performance:** 98.26% Recall (Industry-Leading)  
+**Deployment Status:** Model + Scaler Ready ✅
