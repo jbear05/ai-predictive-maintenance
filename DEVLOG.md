@@ -168,3 +168,26 @@
 
 ### Tomorrow's Plan
 - Select best performing model, create inference pipeline, save as .pkl file, and generate performance report with confusion matrix, ROC curve, and feature importance charts
+
+
+## Day 7
+
+### Goals for Today
+- Select best performing model, create inference pipeline, save as .pkl file, and generate performance report with confusion matrix, ROC curve, and feature importance charts
+
+### What I Did
+**Afternoon (12pm-5pm):**
+- Fixed scaler issue and retrained model
+
+**Evening (7pm-11pm):**
+- Committed new changes and fix_scaler.py
+
+### Decisions
+- 
+
+
+### Problems/Solutions
+- When cleaning the datasets, I used different scalers for each raw data file, which makes it impossible to choose one of the four scalers when normalizing new data
+      Solution: Rescale train_processed.csv and retrain my model
+
+### Tomorrow's Plan
