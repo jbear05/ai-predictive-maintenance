@@ -183,7 +183,7 @@
 - Committed new changes and fix_scaler.py
 
 ### Decisions
-- 
+- None
 
 
 ### Problems/Solutions
@@ -191,3 +191,24 @@
       Solution: Rescale train_processed.csv and retrain my model
 
 ### Tomorrow's Plan
+- Create inference pipeline and documentation
+
+
+## Day 8
+
+### Goals for Today
+- Create inference pipeline and documentation
+
+### What I Did
+**Afternoon (12pm-5pm):**
+- 
+
+### Decisions
+- 
+
+
+### Problems/Solutions
+- 
+
+### Tomorrow's Plan
+- 

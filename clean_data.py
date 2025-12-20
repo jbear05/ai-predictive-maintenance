@@ -123,7 +123,7 @@ def remove_outliers_3sigma(df: pd.DataFrame, columns: t.List[str]) -> pd.DataFra
     """
     
     # Create the output directory if it doesn't exist (side effect)
-    os.makedirs("data\\processed", exist_ok=True)
+    os.makedirs("./data/processed", exist_ok=True)
     df_out: pd.DataFrame = df.copy()
 
     # Track which rows to keep. Initially, assume all are kept (True)
@@ -165,8 +165,8 @@ def main() -> None:
     
     # --- Configuration ---
     # Define input and output paths
-    INPUT_DIR: str = "data\\raw"
-    OUTPUT_DIR: str = "data\\processed"
+    INPUT_DIR: str = "./data/raw"
+    OUTPUT_DIR: str = "./data/processed"
 
     # Get all train files
     train_files: t.List[str] = [f for f in os.listdir(INPUT_DIR) if f.startswith('train_FD') and f.endswith('.txt')]
