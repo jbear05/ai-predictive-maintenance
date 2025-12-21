@@ -200,17 +200,18 @@
 - Create inference pipeline and documentation
 
 ### What I Did
-**Afternoon (12pm-7pm):**
+**Afternoon-Evening (12pm-11pm):**
 - inference.py created
 - generate_report.py created and report generated with 4 images
 - Documentation updated
+- File paths updated
 
 ### Decisions
-- 
+- None
 
 
 ### Problems/Solutions
-- 
+- None
 
 ### Tomorrow's Plan
-- 
+- Code Review and refactor any code that can be improved
