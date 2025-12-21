@@ -9,6 +9,15 @@ import joblib
 import json
 import os
 
+# Define paths as constants for easier maintenance
+DATA_DIR = "data/processed"
+MODEL_DIR = "models"
+
+def load_data(file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Could not find {file_path}")
+    return pd.read_csv(file_path)
+
 def main():
     print("="*70)
     print("FIXING SCALER - Creating consistent normalization")
@@ -16,17 +25,19 @@ def main():
     
     # Load your existing processed data
     print("\n📂 Loading processed datasets...")
-    train_df = pd.read_csv('data/processed/train_processed.csv')
-    val_df = pd.read_csv('data/processed/val_processed.csv')
+    try:
+        train_df = load_data(os.path.join(DATA_DIR, 'train_processed.csv'))
+        val_df = load_data(os.path.join(DATA_DIR, 'val_processed.csv'))
+    except Exception as e:
+        print(f"❌ Error loading data: {e}")
+        return
     print(f"✅ Loaded train: {len(train_df)} records")
     print(f"✅ Loaded validation: {len(val_df)} records")
     
-    # Identify sensor columns
-    sensor_cols = [col for col in train_df.columns if col.startswith('sensor_')]
-    print(f"\n🔍 Found {len(sensor_cols)} sensor columns")
-    
-    # Only scale columns with variance
-    cols_to_scale = [col for col in sensor_cols if train_df[col].std() > 1e-10]
+    # Identify and filter columns
+    sensor_cols = [c for c in train_df.columns if c.startswith('sensor_')]
+    cols_to_scale = [c for c in sensor_cols if train_df[c].std() > 1e-10]
+
     print(f"📊 Will scale {len(cols_to_scale)} columns (skipping constant sensors)")
     print(f"   Columns to scale: {cols_to_scale[:5]}... (showing first 5)")
     
@@ -48,19 +59,19 @@ def main():
     
     # Save the scaler
     os.makedirs("models", exist_ok=True)
-    joblib.dump(scaler, 'models/scaler.pkl')
+    joblib.dump(scaler, os.path.join(MODEL_DIR, 'scaler.pkl'))
     print("\n💾 Scaler saved to models/scaler.pkl")
     
     # Save column names
-    with open('models/scaler_columns.json', 'w') as f:
+    with open(os.path.join(MODEL_DIR, 'scaler_columns.json'), 'w') as f:
         json.dump(cols_to_scale, f, indent=2)
     print("💾 Column names saved to models/scaler_columns.json")
     
     # Overwrite your processed files with properly scaled data
-    train_df.to_csv('data/processed/train_processed.csv', index=False)
-    val_df.to_csv('data/processed/val_processed.csv', index=False)
-    print("\n💾 Updated data/processed/train_processed.csv")
-    print("💾 Updated data/processed/val_processed.csv")
+    train_df.to_csv(os.path.join(DATA_DIR, 'train_processed.csv'), index=False)
+    val_df.to_csv(os.path.join(DATA_DIR, 'val_processed.csv'), index=False)
+    print(f"\n💾 Updated {os.path.join(DATA_DIR, 'train_processed.csv')}")
+    print(f"💾 Updated {os.path.join(DATA_DIR, 'val_processed.csv')}")
     
     print("\n" + "="*70)
     print("✅ SCALER FIX COMPLETE!")
