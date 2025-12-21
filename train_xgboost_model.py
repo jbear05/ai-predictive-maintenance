@@ -4,7 +4,18 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, class
 import pandas as pd
 import numpy as np
 import joblib
+import os
 
+
+# Define paths as constants for easier maintenance
+DATA_DIR = "data/processed"
+MODEL_DIR = "models"
+RESULTS_DIR = "results"
+
+def load_data(file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Could not find {file_path}")
+    return pd.read_csv(file_path)
 
 def train_xgboost_model(
     X_train: pd.DataFrame, 
@@ -166,7 +177,7 @@ def train_xgboost_model(
     precision : float = precision_score(y_test, y_pred)
 
     # Save trained model as pickle file for later use
-    joblib.dump(best_model, 'models/xgboost_model.pkl')
+    joblib.dump(best_model, os.path.join(MODEL_DIR, 'xgboost_model.pkl'))
 
     print(f"\n=== MODEL PERFORMANCE ===")
     print(f"Accuracy:  {accuracy:.2%} (Target: ≥80%)")
@@ -177,7 +188,7 @@ def train_xgboost_model(
     print("\n" + classification_report(y_test, y_pred))
 
     # Save results to file
-    with open('results/model_comparison.txt', 'a') as f:
+    with open(os.path.join(RESULTS_DIR, 'model_comparison.txt'), 'a') as f:
         f.write("\n=== XGBOOST MODEL ===\n")
         f.write(f"Best Parameters: {best_params}\n")
         f.write(f"Accuracy: {accuracy:.4f}\n")
@@ -282,9 +293,14 @@ def main():
     ValueError
         If datasets contain incompatible dtypes or shapes.
     """
-    # Load pre-split training and validation datasets
-    train_df: pd.DataFrame = pd.read_csv('data/processed/train_processed.csv')
-    val_df: pd.DataFrame = pd.read_csv('data/processed/val_processed.csv')
+    # Load your existing processed data
+    print("\n📂 Loading processed datasets...")
+    try:
+        train_df = load_data(os.path.join(DATA_DIR, 'train_processed.csv'))
+        val_df = load_data(os.path.join(DATA_DIR, 'val_processed.csv'))
+    except Exception as e:
+        print(f"❌ Error loading data: {e}")
+        return
     
     # Define columns to exclude from features
     # These are either non-predictive, identifiers, or leak future information
