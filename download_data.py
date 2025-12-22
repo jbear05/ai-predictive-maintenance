@@ -10,6 +10,9 @@ import zipfile
 import sys
 import typing as t # For type hinting complex structures
 
+# Official NASA PCoE dataset URL
+URL = "https://phm-datasets.s3.amazonaws.com/NASA/6.+Turbofan+Engine+Degradation+Simulation+Data+Set.zip"
+
 def progress_hook(count: int, block_size: int, total_size: int) -> None:
     """
     Callback function used by urllib.request to display download progress.
@@ -47,11 +50,9 @@ def download_cmapss_dataset() -> bool:
     """
     
     # Configuration
-    # Official NASA PCoE dataset URL
-    url: str = "https://phm-datasets.s3.amazonaws.com/NASA/6.+Turbofan+Engine+Degradation+Simulation+Data+Set.zip"
     
     # Local directory structure as defined in the project plan
-    data_dir: str = "data\\raw"
+    data_dir: str = "data/raw"
     
     # Path for the temporary zip file
     zip_path: str = os.path.join(data_dir, "cmapss.zip")
@@ -64,14 +65,14 @@ def download_cmapss_dataset() -> bool:
     print("NASA C-MAPSS DATASET DOWNLOADER (Step 1.1)")
     print("=" * 70)
     print(f"\n📥 Starting download...")
-    print(f"Source: {url}")
+    print(f"Source: {URL}")
     print(f"Destination: {os.path.abspath(data_dir)}")
     print("-" * 70)
     
     try:
         # 1. Download File with Progress
         # The progress_hook defined above is used for visual feedback
-        urllib.request.urlretrieve(url, zip_path, progress_hook)
+        urllib.request.urlretrieve(URL, zip_path, progress_hook)
         print("\n✅ Download complete!")
         
         # Get file size for confirmation
@@ -144,7 +145,7 @@ def main() -> None:
     
     if not success:
         print("\n⚠️  Download failed. You may need to download the dataset manually from:")
-        print("https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/")
+        print(URL)
         sys.exit(1)
     
     print("\n")
