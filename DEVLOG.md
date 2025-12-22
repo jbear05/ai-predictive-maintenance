@@ -215,3 +215,23 @@
 
 ### Tomorrow's Plan
 - Code Review and refactor any code that can be improved
+
+
+## Day 9
+
+### Goals for Today
+- Code Review and refactor any code that can be improved
+
+### What I Did
+**Evening (6pm-11pm):**
+- Code Review
+
+### Decisions
+- None
+
+
+### Problems/Solutions
+- None
+
+### Tomorrow's Plan
+- Code Review and refactor any code that can be improved
