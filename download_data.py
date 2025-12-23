@@ -10,7 +10,7 @@ import zipfile
 import sys
 import typing as t # For type hinting complex structures
 
-# Official NASA PCoE dataset URL
+# dataset URL
 URL = "https://phm-datasets.s3.amazonaws.com/NASA/6.+Turbofan+Engine+Degradation+Simulation+Data+Set.zip"
 
 def progress_hook(count: int, block_size: int, total_size: int) -> None:

@@ -28,7 +28,7 @@ def verify_dataset() -> bool:
                            [f'sensor_{i}' for i in range(1, 22)]
     
     # Target directory containing all FD files
-    data_dir: str = 'data\\raw'
+    data_dir: str = 'data/raw'
     
     # Project requirement from S.M.A.R.T. plan (minimum 50,000 records)
     requirement: int = 50000
@@ -39,7 +39,7 @@ def verify_dataset() -> bool:
     print("=" * 70)
     
         # 1. File Existence Check
-    data_dir: str = 'data\\raw'
+    data_dir: str = 'data/raw'
     train_files: t.List[str] = [f for f in os.listdir(data_dir) if f.startswith('train_FD') and f.endswith('.txt')]
 
     if not train_files:
