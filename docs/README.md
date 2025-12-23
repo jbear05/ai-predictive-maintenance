@@ -3,7 +3,7 @@
 Privacy-preserving predictive maintenance for DOE facilities
 
 ## Overview
-This system uses machine learning to predict equipment failures 24-48 hours in advance, enabling proactive maintenance while maintaining data security for classified environments.
+This system uses machine learning to predict equipment failures, enabling proactive maintenance while maintaining data security for classified environments.
 
 ## Quick Start
 ```bash
@@ -39,8 +39,11 @@ ai-predictive-maintenance/
 - Air-gapped deployment capable
 
 ## Requirements
-- Python 3.12+
+- Python 3.8+
 - See `requirements.txt` for packages
+
+## Example Usage
+- Coming Soon...
 
 ## License
 MIT License
