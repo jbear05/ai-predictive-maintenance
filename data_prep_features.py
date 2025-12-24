@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 import warnings
+from config import config
 import typing as t # For advanced type hinting
 # Ignore pandas future warnings for rolling/ewm operations
 warnings.filterwarnings('ignore') 
@@ -28,9 +29,9 @@ class CMAPSSDataPreparator:
         A list of the names of all engineered features.
     """
     
-    def __init__(self, data_dir: str | Path = 'data'):
+    def __init__(self, data_dir=None):
         # Convert string path to pathlib.Path object for cleaner path operations
-        self.data_dir: Path = Path(data_dir)
+        self.data_dir = data_dir or config.paths.processed_data
         self.train_df: pd.DataFrame | None = None
         self.val_df: pd.DataFrame | None = None
         self.feature_names: t.List[str] = []
@@ -94,7 +95,7 @@ class CMAPSSDataPreparator:
         
         return combined_df
     
-    def create_target_variable(self, df: pd.DataFrame, failure_window: int = 48) -> pd.DataFrame:
+    def create_target_variable(self, df: pd.DataFrame, failure_window: int = None) -> pd.DataFrame:
         """
         Creates the Remaining Useful Life (RUL) column and the binary target variable.
         
@@ -113,6 +114,10 @@ class CMAPSSDataPreparator:
         pd.DataFrame
             The DataFrame with the 'RUL' and 'target' columns added.
         """
+
+        # Use config default if not provided
+        failure_window = failure_window or config.data.failure_window
+
         print(f"\nCreating target variable (failure window: {failure_window} cycles)...")
         
         df = df.copy()
@@ -208,8 +213,8 @@ class CMAPSSDataPreparator:
     
     def create_train_val_split(self, 
                                df: pd.DataFrame, 
-                               test_size: float = 0.2, 
-                               random_state: int = 42) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
+                               test_size: float = None, 
+                               random_state: int = None) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Creates an 80/20 train/validation split by dividing the *unit_id*s, not the records.
         This prevents data leakage, ensuring model evaluation is accurate.
@@ -229,6 +234,10 @@ class CMAPSSDataPreparator:
         tuple[pd.DataFrame, pd.DataFrame]
             A tuple containing the training DataFrame and the validation DataFrame.
         """
+        # Use config defaults if parameters not provided
+        test_size = test_size or config.data.val_split_ratio
+        random_state = random_state or config.data.random_state
+
         print(f"\nCreating {int((1-test_size)*100)}/{int(test_size*100)} train/validation split...")
         
         # 1. Identify all unique units and their 'target' class (whether they failed in the data)

@@ -4,40 +4,15 @@ import joblib
 import json
 from typing import Dict, Tuple, Union
 import warnings
+from loaders import load_inference_artifacts
+from config import config
 warnings.filterwarnings('ignore') # Suppress sklearn warnings for cleaner output
 
 def load_artifacts() -> Tuple[object, object, list]:
-    """
-    Load the trained model, scaler, and column metadata.
-
-    1. The model (makes predictions)
-    2. The scaler (normalizes data the same way as training)
-    3. Column list (tells us which columns to scale)
-    
-    Returns
-    -------
-    tuple
-        (model, scaler, columns_to_scale)
-    """
-    print("Loading artifacts...")
-    
-    model = joblib.load('models/xgboost_model.pkl')
-    print("✅ Model loaded")
-    
-    # ADD THIS DEBUG CODE
-    print(f"   Model expects {model.n_features_in_} features")
-    if hasattr(model, 'feature_names_in_'):
-        print(f"   Model feature names available: Yes")
-    
-    scaler = joblib.load('models/scaler.pkl')
-    print("✅ Scaler loaded")
-    
-    # Load the list of columns that should be scaled
-    with open('models/scaler_columns.json', 'r') as f:
-        columns_to_scale = json.load(f)
-    print(f"✅ Scaler columns loaded ({len(columns_to_scale)} columns)")
-    
-    return model, scaler, columns_to_scale
+    """Wrapper for backward compatibility."""
+    from loaders import DataLoader
+    loader = DataLoader(config)
+    return loader.load_artifacts()
 
 
 def preprocess_sensor_data(

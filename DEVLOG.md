@@ -235,3 +235,27 @@
 
 ### Tomorrow's Plan
 - Code Review and refactor any code that can be improved
+
+
+## Day 10
+
+### Goals for Today
+- Code Review and refactor any code that can be improved
+
+### What I Did
+**Afternoon (1pm-4pm):**
+- Code Review
+
+**Evening (5pm-11pm):**
+- Implemented config.py and loaders.py to improve scalability
+- Updated functions to use these functions
+
+### Decisions
+- None
+
+
+### Problems/Solutions
+- None
+
+### Tomorrow's Plan
+- Begin working on dashboard

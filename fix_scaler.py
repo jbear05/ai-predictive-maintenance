@@ -5,18 +5,9 @@ Creates a single, consistent scaler for the entire pipeline
 
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from config import config
 import joblib
 import json
-import os
-
-# Define paths as constants for easier maintenance
-DATA_DIR = "data/processed"
-MODEL_DIR = "models"
-
-def load_data(file_path):
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Could not find {file_path}")
-    return pd.read_csv(file_path)
 
 def main():
     print("="*70)
@@ -25,12 +16,9 @@ def main():
     
     # Load your existing processed data
     print("\n📂 Loading processed datasets...")
-    try:
-        train_df = load_data(os.path.join(DATA_DIR, 'train_processed.csv'))
-        val_df = load_data(os.path.join(DATA_DIR, 'val_processed.csv'))
-    except Exception as e:
-        print(f"❌ Error loading data: {e}")
-        return
+    train_df = pd.read_csv(config.paths.train_file)
+    val_df = pd.read_csv(config.paths.val_file)
+
     print(f"✅ Loaded train: {len(train_df)} records")
     print(f"✅ Loaded validation: {len(val_df)} records")
     
@@ -58,20 +46,21 @@ def main():
     print(f"   Validation max: {val_df[cols_to_scale].max().max():.4f}")
     
     # Save the scaler
-    os.makedirs("models", exist_ok=True)
-    joblib.dump(scaler, os.path.join(MODEL_DIR, 'scaler.pkl'))
-    print("\n💾 Scaler saved to models/scaler.pkl")
+    scaler_path = config.paths.models_root / 'scaler.pkl'
+    joblib.dump(scaler, scaler_path)
+    print(f"\n💾 Scaler saved to {scaler_path}")
     
     # Save column names
-    with open(os.path.join(MODEL_DIR, 'scaler_columns.json'), 'w') as f:
+    columns_path = config.paths.models_root / 'scaler_columns.json'
+    with open(columns_path, 'w') as f:
         json.dump(cols_to_scale, f, indent=2)
-    print("💾 Column names saved to models/scaler_columns.json")
+    print(f"💾 Column names saved to {columns_path}")
     
-    # Overwrite your processed files with properly scaled data
-    train_df.to_csv(os.path.join(DATA_DIR, 'train_processed.csv'), index=False)
-    val_df.to_csv(os.path.join(DATA_DIR, 'val_processed.csv'), index=False)
-    print(f"\n💾 Updated {os.path.join(DATA_DIR, 'train_processed.csv')}")
-    print(f"💾 Updated {os.path.join(DATA_DIR, 'val_processed.csv')}")
+    # Overwrite your processed files - FIX THESE LINES:
+    train_df.to_csv(config.paths.train_file, index=False)
+    val_df.to_csv(config.paths.val_file, index=False)
+    print(f"\n💾 Updated {config.paths.train_file}")
+    print(f"💾 Updated {config.paths.val_file}")
     
     print("\n" + "="*70)
     print("✅ SCALER FIX COMPLETE!")

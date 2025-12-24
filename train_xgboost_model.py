@@ -1,6 +1,8 @@
 from xgboost import XGBClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, recall_score, precision_score, classification_report, confusion_matrix
+from config import config
+from loaders import load_train_data, load_val_data
 import pandas as pd
 import numpy as np
 import joblib
@@ -106,33 +108,7 @@ def train_xgboost_model(
     print(f"Scale pos weight: {scale_pos_weight}")
 
     # Create parameter combinations to test (20+ combinations)
-    param_grid : dict = {
-        'n_estimators': [100, 200, 300],           # Number of trees
-        'max_depth': [3, 5, 7],                    # Tree depth
-        'learning_rate': [0.01, 0.1, 0.2],         # Step size
-        'subsample': [0.8, 1.0],                   # Sample % per tree
-        'colsample_bytree': [0.8, 1.0],            # Feature % per tree
-        'min_child_weight': [1, 3]                 # Min samples in leaf
-    }
-
-    # param_grid = {
-    #     'n_estimators': [100, 200],
-    #     'max_depth': [3, 5, 7],
-    #     'learning_rate': [0.1, 0.2],
-    #     'subsample': [0.8],
-    #     'colsample_bytree': [0.8],
-    # }
-    # # ^This gives 2*3*2 = 12 combinations for faster testing
-
-    # # Quick test grid (will take ~3-6 minutes)
-    # param_grid = {
-    #     'n_estimators': [100],
-    #     'max_depth': [3, 5],
-    #     'learning_rate': [0.1],
-    # }
-    # # This is only 2 combinations × 3 folds = 6 trainings
-    # # Use for finding out how long grid search takes
-
+    param_grid = config.get_active_param_grid()  # Uses quick or full grid
 
     # Create base model with fixed parameters
     xgb_base = XGBClassifier(
@@ -177,7 +153,7 @@ def train_xgboost_model(
     precision : float = precision_score(y_test, y_pred)
 
     # Save trained model as pickle file for later use
-    joblib.dump(best_model, os.path.join(MODEL_DIR, 'xgboost_model.pkl'))
+    joblib.dump(best_model, config.paths.models_root / 'xgboost_model.pkl')
 
     print(f"\n=== MODEL PERFORMANCE ===")
     print(f"Accuracy:  {accuracy:.2%} (Target: ≥80%)")
@@ -256,12 +232,6 @@ def main():
 
     Notes
     -----
-    Columns dropped:
-    - 'target': The prediction target (cannot be used as a feature)
-    - 'unit_id': Equipment identifier (non-predictive)
-    - 'source_file': Data source metadata (non-predictive)
-    - 'RUL': Remaining Useful Life (would leak future information)
-    - 'time_cycles': Temporal index (non-predictive, sequential identifier)
 
     **Prediction Window:**
     The target variable indicates whether equipment will fail within the next
@@ -295,31 +265,16 @@ def main():
     """
     # Load your existing processed data
     print("\n📂 Loading processed datasets...")
-    try:
-        train_df = load_data(os.path.join(DATA_DIR, 'train_processed.csv'))
-        val_df = load_data(os.path.join(DATA_DIR, 'val_processed.csv'))
-    except Exception as e:
-        print(f"❌ Error loading data: {e}")
-        return
-    
-    # Define columns to exclude from features
-    # These are either non-predictive, identifiers, or leak future information
-    columns_to_drop: list = ['target', 'unit_id', 'source_file', 'RUL', 'time_cycles']
-    
-    # Prepare feature matrices (X) and target vectors (y)
-    X_train: pd.DataFrame = train_df.drop(columns_to_drop, axis=1)
-    y_train: pd.Series = train_df['target']
-    
-    X_test: pd.DataFrame = val_df.drop(columns_to_drop, axis=1)
-    y_test: pd.Series = val_df['target']
+    X_train, y_train = load_train_data(config)
+    X_val, y_val = load_val_data(config)
     
     # Display dataset information
     print(f"✅ Train: {len(X_train)} samples")
-    print(f"✅ Val: {len(X_test)} samples")
+    print(f"✅ Val: {len(X_val)} samples")
     print(f"✅ Features: {X_train.shape[1]} columns")
     
     # Train and evaluate XGBoost model
-    train_xgboost_model(X_train, y_train, X_test, y_test)
+    train_xgboost_model(X_train, y_train, X_val, y_val)
 
 
 if __name__ == "__main__":

@@ -9,9 +9,12 @@ import urllib.request
 import zipfile
 import sys
 import typing as t # For type hinting complex structures
+from config import config
 
-# dataset URL
+# dataset URL, directory paths, and zip file path
 URL = "https://phm-datasets.s3.amazonaws.com/NASA/6.+Turbofan+Engine+Degradation+Simulation+Data+Set.zip"
+data_dir = config.paths.raw_data  # Uses Path object
+zip_path = data_dir / "cmapss.zip"
 
 def progress_hook(count: int, block_size: int, total_size: int) -> None:
     """
@@ -50,12 +53,6 @@ def download_cmapss_dataset() -> bool:
     """
     
     # Configuration
-    
-    # Local directory structure as defined in the project plan
-    data_dir: str = "data/raw"
-    
-    # Path for the temporary zip file
-    zip_path: str = os.path.join(data_dir, "cmapss.zip")
     
     # Create the data directory if it does not exist
     os.makedirs(data_dir, exist_ok=True)
