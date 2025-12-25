@@ -23,19 +23,35 @@ class PathConfig:
     
     @property
     def raw_data(self) -> Path:
-        return self.data_root / "raw"
+        path = self.data_root / "raw"
+        # Prevent directory traversal attacks
+        if not path.resolve().is_relative_to(self.data_root.resolve()):
+            raise ValueError("Invalid path: directory traversal detected")
+        return path
     
     @property
     def processed_data(self) -> Path:
-        return self.data_root / "processed"
+        path = self.data_root / "processed"
+        # Prevent directory traversal attacks
+        if not path.resolve().is_relative_to(self.data_root.resolve()):
+            raise ValueError("Invalid path: directory traversal detected")
+        return path
     
     @property
     def train_file(self) -> Path:
-        return self.processed_data / "train_processed.csv"
+        path = self.processed_data / "train_processed.csv"
+        # Prevent directory traversal attacks
+        if not path.resolve().is_relative_to(self.data_root.resolve()):
+            raise ValueError("Invalid path: directory traversal detected")
+        return path
     
     @property
     def val_file(self) -> Path:
-        return self.processed_data / "val_processed.csv"
+        path = self.processed_data / "val_processed.csv"
+        # Prevent directory traversal attacks
+        if not path.resolve().is_relative_to(self.data_root.resolve()):
+            raise ValueError("Invalid path: directory traversal detected")
+        return path
     
     def ensure_directories(self) -> None:
         """Create all necessary directories if they don't exist."""
@@ -150,6 +166,18 @@ class Config:
     def __post_init__(self):
         """Initialize directories after config creation."""
         self.paths.ensure_directories()
+        self._validate_config()
+
+    def _validate_config(self):
+        """Validate configuration parameters."""
+        if not 0 < self.data.val_split_ratio < 1:
+            raise ValueError(f"val_split_ratio must be between 0 and 1, got {self.data.val_split_ratio}")
+        
+        if self.data.failure_window < 1:
+            raise ValueError("failure_window must be positive")
+        
+        if self.model.cv_folds < 2:
+            raise ValueError("cv_folds must be at least 2")
     
     @classmethod
     def from_json(cls, filepath: Path) -> 'Config':
