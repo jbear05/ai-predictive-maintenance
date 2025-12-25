@@ -259,3 +259,48 @@
 
 ### Tomorrow's Plan
 - Begin working on dashboard
+
+
+## Day 11
+
+### Goals for Today
+- Begin working on dashboard
+
+### What I Did
+**Afternoon (4pm-6pm):**
+- dashboard mockup created
+
+**Evening (7pm-11pm):**
+- dashboard.py started and cycle normalized feature fixed
+
+### Decisions
+- No manual input for dashboard since that is not what will be expected in a demo.
+
+### Problems/Solutions
+- Cycle normalized feature is broken, values fluctuate up and down as time cycles increase when it should be constantly increasing
+      Solution: Fixing it and retraining model
+
+### Tomorrow's Plan
+- Retrain model and continue improving code and working on dashboard
+
+
+## Day 12
+
+### Goals for Today
+- Retrain model
+- continue improving code
+- continue working on dashboard
+
+### What I Did
+**Afternoon (2pm-6pm):**
+- 
+
+### Decisions
+- 
+
+### Problems/Solutions
+- ProcessPoolExecutor needs to serialize functions, the lambda function I use cannot be serialized (pickled).
+      Solution: Use vectorized pandas operations and direct iteration with a for loop
+
+### Tomorrow's Plan
+- 
