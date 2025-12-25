@@ -3,21 +3,45 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, recall_score, precision_score, classification_report, confusion_matrix
 from config import config
 from loaders import load_train_data, load_val_data
+from datetime import datetime
+import json
 import pandas as pd
 import numpy as np
 import joblib
 import os
 
 
-# Define paths as constants for easier maintenance
-DATA_DIR = "data/processed"
-MODEL_DIR = "models"
-RESULTS_DIR = "results"
-
 def load_data(file_path):
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Could not find {file_path}")
     return pd.read_csv(file_path)
+
+def save_model_with_metadata(model, best_params, metrics):
+    """Save model with versioning and metadata."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Save model
+    model_path = config.paths.models_root / f'xgboost_model_{timestamp}.pkl'
+    joblib.dump(model, model_path)
+    
+    # Save metadata
+    metadata = {
+        'timestamp': timestamp,
+        'parameters': best_params,
+        'metrics': metrics,
+        'feature_count': model.n_features_in_,
+        'model_version': '1.0'
+    }
+    
+    metadata_path = config.paths.models_root / f'model_metadata_{timestamp}.json'
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    
+    # Create symlink to latest model
+    latest_path = config.paths.models_root / 'xgboost_model.pkl'
+    if latest_path.exists():
+        latest_path.unlink()
+    latest_path.symlink_to(model_path.name)
 
 def train_xgboost_model(
     X_train: pd.DataFrame, 
@@ -112,10 +136,12 @@ def train_xgboost_model(
 
     # Create base model with fixed parameters
     xgb_base = XGBClassifier(
-        scale_pos_weight=scale_pos_weight,  # Handle imbalance
+        scale_pos_weight=scale_pos_weight,   # Handle imbalance
         random_state=42,                     # Reproducibility
         eval_metric='logloss',               # Evaluation metric
-        use_label_encoder=False              # Avoid warning
+        use_label_encoder=False,             # Avoid warning
+        early_stopping_rounds=10,            # Early stopping
+        eval_set=[(X_test, y_test)]          # Validation set for early stopping
     )
 
 
@@ -153,7 +179,11 @@ def train_xgboost_model(
     precision : float = precision_score(y_test, y_pred)
 
     # Save trained model as pickle file for later use
-    joblib.dump(best_model, config.paths.models_root / 'xgboost_model.pkl')
+    save_model_with_metadata(best_model, best_params, {
+        'accuracy': accuracy,
+        'recall': recall,
+        'precision': precision
+    })
 
     print(f"\n=== MODEL PERFORMANCE ===")
     print(f"Accuracy:  {accuracy:.2%} (Target: ≥80%)")
@@ -164,7 +194,7 @@ def train_xgboost_model(
     print("\n" + classification_report(y_test, y_pred))
 
     # Save results to file
-    with open(os.path.join(RESULTS_DIR, 'model_comparison.txt'), 'a') as f:
+    with open(os.path.join('results', 'model_comparison.txt'), 'a') as f:
         f.write("\n=== XGBOOST MODEL ===\n")
         f.write(f"Best Parameters: {best_params}\n")
         f.write(f"Accuracy: {accuracy:.4f}\n")
