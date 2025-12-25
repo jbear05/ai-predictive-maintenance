@@ -29,6 +29,12 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         A new DataFrame with clean, outlier-free, and normalized sensor data.
     """
+
+    if df.empty:
+        raise ValueError("Input DataFrame is empty")
+    
+    if not any(col.startswith('sensor_') for col in df.columns):
+        raise ValueError("DataFrame must contain sensor columns")
     
     # 1. Handling Missing Values
     print("\n--- 1. Missing Value Check & Removal ---")
@@ -56,7 +62,7 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
     # Remove rows where any sensor reading is > 3 standard deviations from the mean
     # The 'remove_outliers_3sigma' function handles the logic for Z-scores and skips constant features.
-    df_no_outliers: pd.DataFrame = remove_outliers_3sigma(df_cleaned, sensor_cols)
+    df_no_outliers: pd.DataFrame = remove_outliers_3sigma_vectorized(df_cleaned, sensor_cols)
     
     print(f"Rows after dropping outliers: {len(df_no_outliers)}")
 
@@ -96,65 +102,26 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     return df_no_outliers
 
 
-def remove_outliers_3sigma(df: pd.DataFrame, columns: t.List[str]) -> pd.DataFrame:
-    """
-    Removes rows from the DataFrame where any value in the specified sensor columns 
-    exceeds 3 standard deviations (3-sigma) from its mean.
-
-    Crucially, it skips columns with near-zero variance to prevent division-by-zero 
-    errors (RuntimeWarning) often encountered with the C-MAPSS dataset.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        The input DataFrame containing the sensor data.
-    columns : list of str
-        A list of column names (sensor readings) to check for outliers.
-
-    Returns
-    -------
-    pd.DataFrame
-        A new DataFrame with outlier rows removed.
-
-    Notes
-    -----
-    The function creates a directory 'data\\processed' as a side effect.
-    A boolean mask is used to combine outlier detection results across columns.
-    """
+def remove_outliers_3sigma_vectorized(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """Vectorized outlier removal - much faster for many columns."""
+    df_out = df.copy()
     
-    # Create the output directory if it doesn't exist (side effect)
-    os.makedirs("./data/processed", exist_ok=True)
-    df_out: pd.DataFrame = df.copy()
-
-    # Track which rows to keep. Initially, assume all are kept (True)
-    mask: pd.Series = pd.Series([True] * len(df_out))
+    # Filter columns with variance
+    variable_cols = [col for col in columns if df_out[col].std() > 1e-10]
     
-    print("\n[Outlier Removal Log]")
+    if not variable_cols:
+        return df_out
     
-    for col in columns:
-        # Check if column has variance (std > 1e-10)
-        if df_out[col].std() < 1e-10:
-            # Skip columns with near-zero variance (e.g., sensor_1, sensor_5 in FD001)
-            print(f"  [SKIP] {col:<10} - Near-zero variance (constant feature).")
-            continue
-        
-        # Calculate Z-scores: Z = (X - mu) / sigma
-        # np.abs takes the absolute value (for outliers high or low)
-        z_scores: pd.Series = np.abs((df_out[col] - df_out[col].mean()) / df_out[col].std())
-        
-        # Update the mask: keep only rows where the Z-score is less than 3
-        # The '&' operator combines the current column's mask with the previous ones
-        mask = mask & (z_scores < 3)
-        
-    df_filtered: pd.DataFrame = df_out[mask]
+    # Vectorized Z-score calculation for all columns at once
+    z_scores = np.abs((df_out[variable_cols] - df_out[variable_cols].mean()) / df_out[variable_cols].std())
     
-    outliers_removed: int = len(df_out) - len(df_filtered)
+    # Create mask: keep rows where ALL z-scores < 3
+    mask = (z_scores < 3).all(axis=1)
     
-    # Calculate the percentage of rows removed
-    removal_percentage: float = (outliers_removed / len(df_out)) * 100
-    print(f"\n[SUMMARY] Outliers removed: {outliers_removed} rows ({removal_percentage:.2f}%)")
+    outliers_removed = (~mask).sum()
+    print(f"\n[SUMMARY] Outliers removed: {outliers_removed} rows ({outliers_removed/len(df_out)*100:.2f}%)")
     
-    return df_filtered
+    return df_out[mask]
 
 def main() -> None:
     """

@@ -31,7 +31,12 @@ class CMAPSSDataPreparator:
     
     def __init__(self, data_dir=None):
         # Convert string path to pathlib.Path object for cleaner path operations
-        self.data_dir = data_dir or config.paths.processed_data
+        if data_dir is None:
+            self.data_dir = config.paths.processed_data
+        elif isinstance(data_dir, str):
+            self.data_dir = Path(data_dir)
+        else:
+            self.data_dir = data_dir
         self.train_df: pd.DataFrame | None = None
         self.val_df: pd.DataFrame | None = None
         self.feature_names: t.List[str] = []
@@ -139,75 +144,103 @@ class CMAPSSDataPreparator:
     
     def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Engineers multiple temporal and statistical features on the sensor readings
-        for each engine unit independently. Aligns with the 12+ features goal.
+        Optimized feature engineering using vectorized pandas operations.
         
-
+        This method creates temporal and statistical features for each sensor:
+        - Rolling averages (3, 5, 10 cycle windows)
+        - Rate of change (first derivative)
+        - Exponential moving average (EMA)
+        - Rolling standard deviation
+        - Baseline deviation
+        - Cross-sensor aggregates
+        - Cycle normalization
+        
         Parameters
         ----------
         df : pd.DataFrame
-            The DataFrame containing the sensor readings and target variable.
-
+            Input DataFrame with sensor columns and unit_id.
+            
         Returns
         -------
         pd.DataFrame
-            The DataFrame with all new engineered features added.
+            DataFrame with all original columns plus engineered features.
+            
+        Notes
+        -----
+        Uses vectorized pandas operations instead of multiprocessing because:
+        1. Multiprocessing has high overhead for serializing DataFrames
+        2. Pandas groupby operations are already optimized in C
+        3. For datasets under 1M rows, vectorized ops are faster
         """
-        print("\nEngineering features...")
+        print(f"  Input shape: {df.shape}")
         df = df.copy()
         
-        sensor_cols: t.List[str] = [col for col in df.columns if col.startswith('sensor_')]
+        # Identify sensor columns
+        sensor_cols = [col for col in df.columns if col.startswith('sensor_')]
+        print(f"  Processing {len(sensor_cols)} sensor columns...")
         
-        # Group by unit_id to apply rolling functions independently for each engine
-        df_grouped = df.groupby('unit_id')
+        # Pre-allocate dictionary for new features (more efficient than repeated concat)
+        new_features: t.Dict[str, pd.Series] = {}
         
-        # 1-8. Temporal and Statistical Features (Applied per-unit)
-        for sensor in sensor_cols:
-            # Feature 1-3: Rolling averages (3, 5, 10 cycles) - Captures local trend
-            df[f'{sensor}_roll_avg_3'] = df_grouped[sensor].rolling(window=3, min_periods=1).mean().reset_index(level=0, drop=True)
-            df[f'{sensor}_roll_avg_5'] = df_grouped[sensor].rolling(window=5, min_periods=1).mean().reset_index(level=0, drop=True)
-            df[f'{sensor}_roll_avg_10'] = df_grouped[sensor].rolling(window=10, min_periods=1).mean().reset_index(level=0, drop=True)
+        # Get rolling window sizes from config
+        windows = config.features.rolling_windows  # [3, 5, 10]
+        ema_span = config.features.ema_span  # 5
+        std_window = config.features.std_window  # 5
+        
+        # Process each sensor with vectorized operations
+        for i, sensor in enumerate(sensor_cols):
+            if (i + 1) % 5 == 0:
+                print(f"    Processed {i + 1}/{len(sensor_cols)} sensors...")
             
-            # Feature 4: Rate of change (first difference) - Captures sudden spikes
-            df[f'{sensor}_rate_change'] = df_grouped[sensor].diff().fillna(0).reset_index(level=0, drop=True)
+            grouped = df.groupby('unit_id')[sensor]
             
-            # Feature 5: Exponential moving average (EMA) - Smoother, gives more weight to recent data
-            df[f'{sensor}_ema'] = df_grouped[sensor].ewm(span=5, adjust=False).mean().reset_index(level=0, drop=True)
+            # Rolling averages for different windows
+            for window in windows:
+                new_features[f'{sensor}_roll_avg_{window}'] = (
+                    grouped.transform(lambda x: x.rolling(window, min_periods=1).mean())
+                )
             
-            # Feature 6: Rolling standard deviation - Measures instability/variability
-            df[f'{sensor}_roll_std_5'] = df_grouped[sensor].rolling(window=5, min_periods=1).std().fillna(0).reset_index(level=0, drop=True)
+            # Rate of change (difference from previous cycle)
+            new_features[f'{sensor}_rate_change'] = grouped.diff().fillna(0)
             
-            # Feature 7: Rolling Min-Max range - Measures oscillation amplitude
-            rolling_max: pd.Series = df_grouped[sensor].rolling(window=5, min_periods=1).max()
-            rolling_min: pd.Series = df_grouped[sensor].rolling(window=5, min_periods=1).min()
-            df[f'{sensor}_range_5'] = (rolling_max - rolling_min).reset_index(level=0, drop=True)
-
-            # Feature 8: Deviation from unit baseline (first 10% of cycles)
-            # Baseline is calculated per unit.
-            baseline_means: pd.Series = df_grouped.head(n=10)['sensor_2'].mean() # Using sensor_2 as proxy baseline
-            df[f'{sensor}_dev_baseline'] = df_grouped.transform(lambda x: x - x.iloc[0:int(len(x)*0.1)].mean())[sensor]
+            # Exponential moving average
+            new_features[f'{sensor}_ema'] = (
+                grouped.transform(lambda x: x.ewm(span=ema_span, adjust=False).mean())
+            )
+            
+            # Rolling standard deviation (volatility measure)
+            new_features[f'{sensor}_roll_std_{std_window}'] = (
+                grouped.transform(lambda x: x.rolling(std_window, min_periods=1).std()).fillna(0)
+            )
+            
+            # Deviation from baseline (first 10% of unit's life)
+            new_features[f'{sensor}_dev_baseline'] = grouped.transform(
+                lambda x: x - x.iloc[:max(1, int(len(x) * config.features.baseline_percentage))].mean()
+            )
         
-        # 9-12. Cross-Sensor Aggregates (Statistical features across ALL sensors at one timestamp)
-        print("Creating cross-sensor aggregate statistical features...")
-        sensor_values: np.ndarray = df[sensor_cols].values
-        df['sensor_mean'] = np.mean(sensor_values, axis=1) # Average of all sensor readings
-        df['sensor_std'] = np.std(sensor_values, axis=1)   # Spread of all sensor readings
-        df['sensor_max'] = np.max(sensor_values, axis=1)   # Maximum reading
-        df['sensor_min'] = np.min(sensor_values, axis=1)   # Minimum reading
+        print(f"  Created {len(new_features)} sensor-based features")
         
-        # 13. Cycle progression (normalized)
-        # Normalizes the current cycle count by the max cycle seen for that unit (0 to 1 scale)
-        max_cycle_map: pd.Series = df.groupby('unit_id')['time_cycles'].transform('max')
-        df['cycle_normalized'] = df['time_cycles'] / max_cycle_map
+        # Cross-sensor aggregate features (overall equipment state)
+        sensor_data = df[sensor_cols]
+        new_features['sensor_mean_all'] = sensor_data.mean(axis=1)
+        new_features['sensor_std_all'] = sensor_data.std(axis=1)
+        new_features['sensor_max_all'] = sensor_data.max(axis=1)
+        new_features['sensor_min_all'] = sensor_data.min(axis=1)
         
-        # Count and save feature names
-        new_feature_tags: t.List[str] = ['roll_avg', 'rate_change', 'ema', 'roll_std', 
-                                         'dev_baseline', 'range', 'sensor_', 'cycle_normalized']
-        new_features: t.List[str] = [col for col in df.columns if any(tag in col for tag in new_feature_tags)]
+        # Cycle normalization (how far through its life is this unit?)
+        new_features['cycle_normalized'] = df.groupby('unit_id')['time_cycles'].transform(
+            lambda x: x / x.max()
+        )
         
-        print(f"Total original features: {len(sensor_cols)} + 3 settings + ID/Time")
-        print(f"Total engineered features: {len(new_features)}")
-        self.feature_names = new_features
+        # Single concat operation (much faster than repeated concat in loop)
+        feature_df = pd.DataFrame(new_features, index=df.index)
+        df = pd.concat([df, feature_df], axis=1)
+        
+        # Store feature names for documentation
+        self.feature_names = list(new_features.keys())
+        
+        print(f"  Output shape: {df.shape}")
+        print(f"  Total new features: {len(self.feature_names)}")
         
         return df
     
@@ -387,6 +420,10 @@ def main() -> None:
     # Step 5: Save datasets and documentation
     print("\n[STEP 5] Saving processed datasets and documentation...")
     prep.save_datasets(output_dir='data\\processed')
+
+    df = pd.read_csv('data/processed/val_processed.csv')
+    unit_249 = df[df['unit_id'] == 249]
+    print(unit_249[['time_cycles', 'cycle_normalized']].tail(20))
     
     print("\n" + "="*60)
     print("✓ STEP 1.3 DATA PREPARATION COMPLETE")
