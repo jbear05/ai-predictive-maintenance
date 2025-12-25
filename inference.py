@@ -130,8 +130,35 @@ def predict_failure(
     print("RUNNING INFERENCE PIPELINE")
     print("="*60)
     
-    # Validate input
-    print(f"Input data shape: {data.shape}")
+    # 1. Validate input type
+    if not isinstance(data, pd.DataFrame):
+        raise TypeError(f"Expected DataFrame, got {type(data)}")
+    
+    # 2. Validate not empty
+    if data.empty:
+        raise ValueError("Input DataFrame is empty")
+    
+    # 3. Validate required columns exist
+    missing_cols = set(columns_to_scale) - set(data.columns)
+    if missing_cols:
+        raise ValueError(f"Missing required columns: {missing_cols}")
+    
+    # 4. Validate data types
+    for col in columns_to_scale:
+        if not pd.api.types.is_numeric_dtype(data[col]):
+            raise TypeError(f"Column {col} must be numeric, got {data[col].dtype}")
+    
+    # 5. Validate value ranges (prevent adversarial inputs)
+    for col in columns_to_scale:
+        if data[col].abs().max() > 1e6:  # Reasonable threshold
+            raise ValueError(f"Column {col} contains extreme values")
+    
+    # 6. Check for infinite/NaN values
+    if data[columns_to_scale].isnull().any().any():
+        raise ValueError("Input contains NaN values")
+    
+    if np.isinf(data[columns_to_scale].values).any():
+        raise ValueError("Input contains infinite values")
     
     # Preprocess the data
     data_processed = preprocess_sensor_data(data, scaler, columns_to_scale)
