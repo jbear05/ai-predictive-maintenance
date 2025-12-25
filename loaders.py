@@ -200,7 +200,7 @@ class DataLoader:
         
         return X, y
     
-    def load_artifacts(self) -> Tuple[object, object, List[str]]:
+    def load_artifacts(self) -> Tuple[object, object, List[str], List[str]]:
         """
         Load trained model artifacts (model, scaler, columns).
         
@@ -248,8 +248,10 @@ class DataLoader:
         with open(required_files['columns'], 'r') as f:
             columns_to_scale = json.load(f)
         self.logger.info(f"✅ Scaler columns loaded ({len(columns_to_scale)} columns)")
+
+        all_features = columns_to_scale + ['setting_1', 'setting_2', 'setting_3', 'cycle_normalized']
         
-        return model, scaler, columns_to_scale
+        return model, scaler, columns_to_scale, all_features
     
     def clear_cache(self) -> None:
         """Clear the in-memory data cache."""
