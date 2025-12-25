@@ -86,17 +86,26 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     final_missing_percent: float = (df_no_outliers.isnull().sum().sum() / (len(df_no_outliers) * len(df_no_outliers.columns))) * 100
 
     # Check normalization only on scaled columns
-    min_values: pd.Series = df_no_outliers[cols_to_scale].min()
-    max_values: pd.Series = df_no_outliers[cols_to_scale].max()
-    is_normalized: bool = (min_values.min() >= 0) and (max_values.max() <= 1)
+    # Handle edge case where no columns need scaling
+    if cols_to_scale:
+        min_values: pd.Series = df_no_outliers[cols_to_scale].min()
+        max_values: pd.Series = df_no_outliers[cols_to_scale].max()
+        # Use tolerance for floating point comparison
+        is_normalized: bool = (min_values.min() >= -1e-10) and (max_values.max() <= 1 + 1e-10)
+        min_val_display = min_values.min()
+        max_val_display = max_values.max()
+    else:
+        is_normalized = True  # No variable columns to scale
+        min_val_display = 0.0
+        max_val_display = 0.0
 
     print(f"Total Percentage of Missing Values in Final Data: {final_missing_percent:.4f}%")
     print(f"Target (<2% missing): {'✅ MET' if final_missing_percent < 2 else '❌ NOT MET'}")
 
     print("\nNormalization Check:")
     print(f"All *variable* sensor columns normalized to 0-1 scale: {'✅ MET' if is_normalized else '❌ NOT MET'}")
-    print(f"Min value of scaled sensors: {min_values.min():.4f}")
-    print(f"Max value of scaled sensors: {max_values.max():.4f}")
+    print(f"Min value of scaled sensors: {min_val_display:.4f}")
+    print(f"Max value of scaled sensors: {max_val_display:.4f}")
     print(f"Final dataset size: {len(df_no_outliers)} records")
     
     return df_no_outliers
