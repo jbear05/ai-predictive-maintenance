@@ -419,7 +419,7 @@ def main() -> None:
     
     # Step 5: Save datasets and documentation
     print("\n[STEP 5] Saving processed datasets and documentation...")
-    prep.save_datasets(output_dir='data\\processed')
+    prep.save_datasets(output_dir='data/processed')
 
     df = pd.read_csv('data/processed/val_processed.csv')
     unit_249 = df[df['unit_id'] == 249]
