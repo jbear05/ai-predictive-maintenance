@@ -37,11 +37,12 @@ def save_model_with_metadata(model, best_params, metrics):
     with open(metadata_path, 'w') as f:
         json.dump(metadata, f, indent=2)
     
-    # Create symlink to latest model
+    # Copy to latest model path (using copy instead of symlink for Windows compatibility)
+    import shutil
     latest_path = config.paths.models_root / 'xgboost_model.pkl'
     if latest_path.exists():
         latest_path.unlink()
-    latest_path.symlink_to(model_path.name)
+    shutil.copy2(model_path, latest_path)
 
 def train_xgboost_model(
     X_train: pd.DataFrame, 
@@ -138,10 +139,7 @@ def train_xgboost_model(
     xgb_base = XGBClassifier(
         scale_pos_weight=scale_pos_weight,   # Handle imbalance
         random_state=42,                     # Reproducibility
-        eval_metric='logloss',               # Evaluation metric
-        use_label_encoder=False,             # Avoid warning
-        early_stopping_rounds=10,            # Early stopping
-        eval_set=[(X_test, y_test)]          # Validation set for early stopping
+        eval_metric='logloss'                # Evaluation metric
     )
 
 
