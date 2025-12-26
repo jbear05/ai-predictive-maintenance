@@ -1,34 +1,34 @@
 ======================================================================
 PREDICTIVE MAINTENANCE MODEL - PERFORMANCE REPORT
 ======================================================================
-Generated: 2025-12-20 14:25:01
+Generated: 2025-12-26 00:35:35
 Model: XGBoost Classifier
 Dataset: NASA C-MAPSS Turbofan Engine Data
 
 SECTION 1: OVERALL PERFORMANCE METRICS
 ----------------------------------------------------------------------
-Accuracy:          0.9546 (95.46%)  [Target: ≥80%] ✓
-Precision:         0.7253 (72.53%) [Target: ≥70%] ✓
-Recall:            0.9826 (98.26%)    [Target: ≥85%] ✓
-F1-Score:          0.8346 (83.46%)
-ROC AUC:           0.9940
-Average Precision: 0.9594
+Accuracy:          0.9549 (95.49%)  [Target: ≥80%] ✓
+Precision:         0.7276 (72.76%) [Target: ≥70%] ✓
+Recall:            0.9798 (97.98%)    [Target: ≥85%] ✓
+F1-Score:          0.8351 (83.51%)
+ROC AUC:           0.9942
+Average Precision: 0.9612
 
 SECTION 2: CONFUSION MATRIX ANALYSIS
 ----------------------------------------------------------------------
-True Negatives (TN):  25,363 - Correctly identified healthy equipment
-False Positives (FP):  1,308 - False alarms (predicted failure, actually healthy)
-False Negatives (FN):     61 - Missed failures (CRITICAL - predicted healthy, actually failing)
-True Positives (TP):   3,453 - Correctly predicted failures
+True Negatives (TN):  25,382 - Correctly identified healthy equipment
+False Positives (FP):  1,289 - False alarms (predicted failure, actually healthy)
+False Negatives (FN):     71 - Missed failures (CRITICAL - predicted healthy, actually failing)
+True Positives (TP):   3,443 - Correctly predicted failures
 
-False Alarm Rate:     4.90% of healthy equipment flagged incorrectly
-Missed Failure Rate:  1.74% of failures not caught (Target: <15%)
+False Alarm Rate:     4.83% of healthy equipment flagged incorrectly
+Missed Failure Rate:  2.02% of failures not caught (Target: <15%)
 
 SECTION 3: BUSINESS IMPACT
 ----------------------------------------------------------------------
 Out of 3,514 actual equipment failures:
-  - Model correctly predicted: 3,453 (98.3%)
-  - Model missed: 61 (1.7%)
+  - Model correctly predicted: 3,443 (98.0%)
+  - Model missed: 71 (2.0%)
 
 Advance Warning: 48 operational cycles (~1-2 weeks)
 This allows maintenance teams to:
@@ -41,16 +41,16 @@ SECTION 4: KEY PREDICTIVE FEATURES
 ----------------------------------------------------------------------
 Top 10 features that predict equipment failure:
 
- 1. cycle_normalized                         (importance: 0.6347)
- 2. sensor_13_roll_std_5                     (importance: 0.0184)
- 3. sensor_10_dev_baseline                   (importance: 0.0182)
- 4. sensor_5_roll_avg_10                     (importance: 0.0180)
- 5. sensor_1_roll_avg_10                     (importance: 0.0178)
- 6. sensor_max                               (importance: 0.0177)
- 7. sensor_13_roll_avg_3                     (importance: 0.0174)
- 8. sensor_15                                (importance: 0.0170)
- 9. sensor_13_range_5                        (importance: 0.0163)
-10. sensor_6_dev_baseline                    (importance: 0.0163)
+ 1. cycle_normalized                         (importance: 0.7104)
+ 2. sensor_10_ema                            (importance: 0.0320)
+ 3. sensor_10_dev_baseline                   (importance: 0.0234)
+ 4. sensor_15                                (importance: 0.0211)
+ 5. sensor_max_all                           (importance: 0.0208)
+ 6. sensor_6_dev_baseline                    (importance: 0.0202)
+ 7. sensor_13_roll_avg_3                     (importance: 0.0201)
+ 8. sensor_19_dev_baseline                   (importance: 0.0178)
+ 9. sensor_13_dev_baseline                   (importance: 0.0177)
+10. sensor_14                                (importance: 0.0173)
 
 These features should be monitored most closely in production.
 
@@ -59,7 +59,7 @@ SECTION 5: DETAILED CLASSIFICATION REPORT
               precision    recall  f1-score   support
 
      Healthy       1.00      0.95      0.97     26671
-   Will Fail       0.73      0.98      0.83      3514
+   Will Fail       0.73      0.98      0.84      3514
 
     accuracy                           0.95     30185
    macro avg       0.86      0.97      0.90     30185

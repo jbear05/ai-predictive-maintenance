@@ -4,26 +4,26 @@ BASELINE MODEL COMPARISON
 
 LOGISTIC REGRESSION
 ----------------------------------------
-Training Time: 483.71 seconds
-Accuracy:      0.7666
-Precision:     0.3077
-Recall:        0.8039
-F1-Score:      0.4451
+Training Time: 287.49 seconds
+Accuracy:      0.9554
+Precision:     0.7309
+Recall:        0.9764
+F1-Score:      0.8360
 
 RANDOM FOREST
 ----------------------------------------
-Training Time: 13.22 seconds
-Accuracy:      0.9681
-Precision:     0.9181
-Recall:        0.7974
-F1-Score:      0.8535
+Training Time: 11.75 seconds
+Accuracy:      0.9701
+Precision:     0.9094
+Recall:        0.8253
+F1-Score:      0.8653
 
 ============================================================
 WINNER: Random Forest (Better F1-Score)
 
 === XGBOOST MODEL ===
-Best Parameters: {'colsample_bytree': 1.0, 'learning_rate': 0.01, 'max_depth': 3, 'min_child_weight': 1, 'n_estimators': 300, 'subsample': 1.0}
-Accuracy: 0.9546
-Recall: 0.9826
-Precision: 0.7253
+Best Parameters: {'colsample_bytree': 1.0, 'learning_rate': 0.01, 'max_depth': 3, 'min_child_weight': 3, 'n_estimators': 300, 'subsample': 1.0}
+Accuracy: 0.9549
+Recall: 0.9798
+Precision: 0.7276
 Target Met: YES
