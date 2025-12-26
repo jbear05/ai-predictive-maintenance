@@ -292,15 +292,18 @@
 - continue working on dashboard
 
 ### What I Did
-**Afternoon (2pm-6pm):**
-- 
+**Afternoon-Evening (2pm-11pm):**
+- Retrained model
+- Improved code for scalability
+- Worked on dashboard
+- Fixed documentation with updated model statistics
 
 ### Decisions
-- 
+- None
 
 ### Problems/Solutions
 - ProcessPoolExecutor needs to serialize functions, the lambda function I use cannot be serialized (pickled).
       Solution: Use vectorized pandas operations and direct iteration with a for loop
 
 ### Tomorrow's Plan
-- 
+- Fix engineered features number through documentation and finish dashboard
