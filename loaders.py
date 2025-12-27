@@ -249,7 +249,12 @@ class DataLoader:
             columns_to_scale = json.load(f)
         self.logger.info(f"✅ Scaler columns loaded ({len(columns_to_scale)} columns)")
 
-        all_features = columns_to_scale + ['setting_1', 'setting_2', 'setting_3', 'cycle_normalized']
+        # Use model's actual feature names to ensure correct order for feature importance
+        if hasattr(model, 'feature_names_in_'):
+            all_features = [str(f) for f in model.feature_names_in_]
+        else:
+            # Fallback: reconstruct feature list (settings first, then scaler columns, then cycle_normalized)
+            all_features = ['setting_1', 'setting_2', 'setting_3'] + columns_to_scale + ['cycle_normalized']
         
         return model, scaler, columns_to_scale, all_features
     

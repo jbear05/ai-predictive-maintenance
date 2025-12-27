@@ -8,8 +8,8 @@ from loaders import load_inference_artifacts
 from config import config
 warnings.filterwarnings('ignore') # Suppress sklearn warnings for cleaner output
 
-def load_artifacts() -> Tuple[object, object, list]:
-    """Wrapper for backward compatibility."""
+def load_artifacts() -> Tuple[object, object, list, list]:
+    """Wrapper for backward compatibility. Returns model, scaler, columns_to_scale, all_features."""
     from loaders import DataLoader
     loader = DataLoader(config)
     return loader.load_artifacts()
@@ -214,7 +214,7 @@ def test_inference_pipeline():
     print("="*60)
     
     # Load artifacts
-    model, scaler, columns_to_scale = load_artifacts()
+    model, scaler, columns_to_scale, all_features = load_artifacts()
     
     # Load some validation data to test with
     print("\n📂 Loading validation data for testing...")
