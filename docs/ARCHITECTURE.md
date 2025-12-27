@@ -22,7 +22,7 @@ Raw Data → Data Processing → Model Training → Inference Pipeline
 |--------|---------|-------------|
 | `verify_data.py` | Validate data quality | Check 50K+ records, generate stats |
 | `clean_data.py` | Clean & normalize | Remove outliers, scale to 0-1 range |
-| `data_prep_features.py` | Feature engineering | Create 173 features, 80/20 split |
+| `data_prep_features.py` | Feature engineering | Create 152 features, 80/20 split |
 | `fix_scaler.py` | Fix normalization | Single scaler for consistency ⭐ |
 
 **Critical Fix Applied:** Original cleaning created 4 separate scalers (one per file), causing inconsistent normalization. Fixed by fitting ONE scaler on training data only and saving it for inference.
@@ -31,7 +31,7 @@ Raw Data → Data Processing → Model Training → Inference Pipeline
 
 | Script | Models Trained | Performance |
 |--------|----------------|-------------|
-| `train_baseline_models.py` | Logistic Regression, Random Forest | 80% recall baseline |
+| `train_baseline_models.py` | Logistic Regression, Random Forest | 83% recall baseline |
 | `train_xgboost.py` | XGBoost (108 configs tested) | 98% recall ⭐ |
 
 **XGBoost Configuration:**
@@ -40,7 +40,7 @@ Raw Data → Data Processing → Model Training → Inference Pipeline
 - Handles 9:1 class imbalance automatically
 - Training time: ~1-3 hours
 
-**Model Selection:** XGBoost won due to 98% recall vs Random Forest's 80% (catches 18% more failures despite more false alarms).
+**Model Selection:** XGBoost won due to 98% recall vs Random Forest's 83% (catches 15% more failures despite more false alarms).
 
 ### 3. Inference & Reporting
 
@@ -95,17 +95,16 @@ Deployment-ready artifacts:
 ## Feature Engineering
 
 **Input:** 26 columns (21 sensors + 3 settings + 2 metadata)  
-**Output:** 197 predictive features
+**Output:** 152 engineered features + original sensors
 
-**Feature Categories (173 created):**
+**Feature Categories (152 created):**
 1. Rolling averages (3, 5, 10 cycles) - 63 features
 2. Rate of change (first difference) - 21 features
 3. Exponential moving average - 21 features
 4. Rolling std deviation (volatility) - 21 features
 5. Baseline deviation (drift from healthy) - 21 features
-6. Range (max-min over 5 cycles) - 21 features
-7. Statistical aggregates (mean, std, max, min) - 4 features
-8. Cycle normalized (lifecycle position) - 1 feature
+6. Statistical aggregates (mean, std, max, min) - 4 features
+7. Cycle normalized (lifecycle position) - 1 feature
 
 **Top Predictive Features:**
 - `cycle_normalized`: 60% importance (lifecycle position)*
@@ -121,8 +120,8 @@ Deployment-ready artifacts:
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
 | Accuracy | 95.5% | ≥80% | ✅ +15.5% |
-| Recall | 98.3% | ≥85% | ✅ +13.3% |
-| Precision | 72.5% | ≥70% | ✅ +2.5% |
+| Recall | 98.0% | ≥85% | ✅ +13.0% |
+| Precision | 72.8% | ≥70% | ✅ +2.8% |
 | ROC AUC | 0.99 | — | ✅ Excellent |
 
 ### Confusion Matrix
@@ -213,7 +212,7 @@ results/performance_report/
 ### Completed ✅
 - Data acquisition & validation (160K records)
 - Data cleaning & normalization (0% missing values)
-- Feature engineering (173 features created)
+- Feature engineering (152 features created)
 - Scaler correction (single consistent scaler)
 - Model training & selection (XGBoost: 98% recall)
 - Inference pipeline (production-ready)
@@ -226,9 +225,9 @@ results/performance_report/
 
 ## Quick Reference
 
-**Dataset:** 157K cycles, 260 engines, 197 features  
+**Dataset:** 157K cycles, 260 engines, 152 engineered features  
 **Best Model:** XGBoost (300 trees, depth=3, lr=0.01)  
-**Performance:** 98.3% recall, 72.5% precision, 0.99 AUC  
+**Performance:** 98.0% recall, 72.8% precision, 0.99 AUC  
 **Warning Window:** 48 cycles ≈ 1-2 weeks  
 
 **Key Files:**

@@ -308,3 +308,23 @@
 ### Tomorrow's Plan
 - Fix engineered features number through documentation and finish dashboard
 - Brief explanation of statistics on dashboard
+
+
+## Day 13
+
+### Goals for Today
+- Fix engineered features number through documentation and finish dashboard
+- Brief explanation of statistics on dashboard
+
+### What I Did
+**Afternoong (12pm-6pm):**
+- 
+
+### Decisions
+- 
+
+### Problems/Solutions
+- 
+
+### Tomorrow's Plan
+- 

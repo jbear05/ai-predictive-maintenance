@@ -51,15 +51,15 @@ Created **152 new features** from 21 raw sensors to capture degradation patterns
 
 | Model | Accuracy | Recall | Precision | Training Time |
 |-------|----------|--------|-----------|---------------|
-| Logistic Regression | 76.7% | 80.4% | 30.8% | ~8 min |
-| Random Forest | 96.8% | 79.7% | 91.8% | ~13 sec |
-| **XGBoost (Selected)** | **95.5%** | **98.3%** | **72.5%** | ~1-3 hrs |
+| Logistic Regression | 95.5% | 97.6% | 73.1% | ~5 min |
+| Random Forest | 97.0% | 82.5% | 90.9% | ~12 sec |
+| **XGBoost (Selected)** | **95.5%** | **98.0%** | **72.8%** | ~1-3 hrs |
 
 ### Why XGBoost Won
 
-**XGBoost catches 98% of failures** (misses only 2%) vs Random Forest's 80% (misses 20%). In predictive maintenance, missing a failure is far more costly than a false alarm.
+**XGBoost catches 98% of failures** (misses only 2%) vs Random Forest's 83% (misses 17%). In predictive maintenance, missing a failure is far more costly than a false alarm.
 
-**Trade-off:** XGBoost has more false alarms (27%) than Random Forest (8%), but this is acceptable because:
+**Trade-off:** XGBoost has more false alarms (27%) than Random Forest (9%), but this is acceptable because:
 - Cost of missed failure >> cost of false alarm
 - 1-2 week warning allows proper planning
 - Maintenance teams can triage alerts using confidence scores
@@ -77,7 +77,7 @@ Actual Failure      61   3,453  (caught failures)
 
 ### Key Metrics Explained
 
-- **Recall (98.3%):** Catches 98 out of 100 real failures ⭐
+- **Recall (98.0%):** Catches 98 out of 100 real failures ⭐
 - **Precision (72.5%):** When it predicts failure, it's right 73% of the time
 - **ROC AUC (0.99):** Near-perfect ability to separate failures from healthy equipment
 - **Average Precision (0.94):** 9x better than random guessing
