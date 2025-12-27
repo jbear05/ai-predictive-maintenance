@@ -307,3 +307,4 @@
 
 ### Tomorrow's Plan
 - Fix engineered features number through documentation and finish dashboard
+- Brief explanation of statistics on dashboard
