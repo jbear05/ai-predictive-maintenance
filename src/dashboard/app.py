@@ -5,6 +5,7 @@ Run with: streamlit run src/dashboard/app.py
 Or from project root: python run_dashboard.py
 """
 
+import logging
 import sys
 from pathlib import Path
 
@@ -27,14 +28,24 @@ from dashboard.results import display_prediction_results
 
 warnings.filterwarnings('ignore')
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 
 @st.cache_resource
 def load_model_artifacts():
     """Load model, scaler, and columns once and cache them."""
+    logger.info("Loading model artifacts...")
     with st.spinner("Loading model artifacts..."):
         try:
             model, scaler, columns_to_scale, all_features = load_inference_artifacts(config)
+            logger.info(f"Model loaded successfully. Features: {len(all_features)}, Columns to scale: {len(columns_to_scale)}")
         except Exception as e:
+            logger.error(f"Failed to load model artifacts: {e}", exc_info=True)
             st.error(f"Error loading model artifacts: {e}")
             st.stop()
     return model, scaler, columns_to_scale, all_features
@@ -108,7 +119,18 @@ def _render_upload_section(columns_to_scale: list) -> tuple:
         return None, False
     
     # Load the data
-    df = validate_uploaded_file(uploaded_file)
+    logger.info(f"File uploaded: {uploaded_file.name}, size: {uploaded_file.size} bytes")
+    try:
+        df = validate_uploaded_file(uploaded_file)
+        logger.info(f"File validated successfully. Shape: {df.shape}")
+    except ValueError as e:
+        logger.warning(f"File validation failed: {e}")
+        st.error(f"❌ {e}")
+        return None, False
+        df = validate_uploaded_file(uploaded_file)
+    except ValueError as e:
+        st.error(f"❌ {e}")
+        return None, False
     
     # Data preview section
     with st.expander("📋 Data Preview", expanded=False):
@@ -126,6 +148,7 @@ def _render_upload_section(columns_to_scale: list) -> tuple:
     is_valid, missing_cols, metadata_cols, unknown_cols = validate_uploaded_data(df, columns_to_scale)
     
     if not is_valid:
+        logger.warning(f"Column validation failed. Missing {len(missing_cols)} columns: {missing_cols[:5]}...")
         st.error(f"❌ **Validation Error:** {len(missing_cols)} required columns are missing")
         with st.expander("View missing columns"):
             for col in missing_cols:
@@ -217,11 +240,14 @@ def main():
     st.markdown("### Equipment Health Monitoring & Failure Prediction")
     st.info("ℹ️ This dashboard uses machine learning to predict equipment failures 48 cycles in advance based on sensor data.")
     
+    logger.info("Dashboard initialized")
+    
     # Load model artifacts (cached)
     try:
         model, scaler, columns_to_scale, all_features = load_model_artifacts()
         st.success("✅ Model loaded successfully")
     except Exception as e:
+        logger.critical(f"Failed to load model on startup: {e}", exc_info=True)
         st.error(f"❌ Failed to load model: {e}")
         st.exception(e)
         st.stop()
@@ -242,6 +268,7 @@ def main():
         run_prediction = st.button("Predict Equipment Health", type="primary", use_container_width=True)
     
     if run_prediction:
+        logger.info(f"Starting prediction on {len(df)} samples with threshold {threshold}")
         with st.spinner("Running inference pipeline..."):
             try:
                 predictions, probabilities = predict_failure(
@@ -259,9 +286,12 @@ def main():
                 state = get_state()
                 state.store_results(predictions, probabilities, df, threshold)
                 
+                num_at_risk = int(predictions.sum())
+                logger.info(f"Prediction complete. At risk: {num_at_risk}/{len(predictions)} ({num_at_risk/len(predictions)*100:.1f}%)")
                 st.success("✅ Analysis complete!")
                 
             except Exception as e:
+                logger.error(f"Prediction failed: {e}", exc_info=True)
                 st.error(f"❌ Prediction failed: {e}")
                 st.exception(e)
     

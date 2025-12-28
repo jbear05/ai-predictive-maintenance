@@ -2,8 +2,11 @@
 Data validation utilities for uploaded files.
 """
 
+import logging
 import pandas as pd
 from typing import Set, Tuple, List
+
+logger = logging.getLogger(__name__)
 
 # Columns that are expected but not scaled (metadata/identifiers)
 METADATA_COLUMNS: Set[str] = {
@@ -40,6 +43,7 @@ def validate_uploaded_file(uploaded_file) -> pd.DataFrame:
     max_size_bytes = MAX_FILE_SIZE_MB * 1024 * 1024
     
     if uploaded_file.size > max_size_bytes:
+        logger.warning(f"File rejected: size {uploaded_file.size} exceeds max {max_size_bytes}")
         raise ValueError(f"File too large. Max size: {MAX_FILE_SIZE_MB}MB")
     
     try:
@@ -49,16 +53,21 @@ def validate_uploaded_file(uploaded_file) -> pd.DataFrame:
             low_memory=False,
             encoding='utf-8'
         )
+        logger.debug(f"CSV parsed successfully: {df.shape[0]} rows, {df.shape[1]} columns")
     except Exception as e:
+        logger.error(f"CSV parsing failed: {e}")
         raise ValueError(f"Failed to read CSV: {str(e)}")
     
     if len(df.columns) > MAX_COLUMNS:
+        logger.warning(f"File rejected: {len(df.columns)} columns exceeds max {MAX_COLUMNS}")
         raise ValueError(f"Too many columns (max {MAX_COLUMNS})")
     
     memory_bytes = df.memory_usage(deep=True).sum()
     if memory_bytes > MAX_MEMORY_MB * 1024 * 1024:
+        logger.warning(f"File rejected: memory {memory_bytes / 1024 / 1024:.1f}MB exceeds max {MAX_MEMORY_MB}MB")
         raise ValueError(f"Dataset too large for processing (max {MAX_MEMORY_MB}MB)")
     
+    logger.info(f"File validation passed: {df.shape[0]} rows, {df.shape[1]} columns, {memory_bytes / 1024 / 1024:.1f}MB")
     return df
 
 

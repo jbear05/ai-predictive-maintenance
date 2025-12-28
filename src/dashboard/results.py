@@ -4,10 +4,13 @@ Results display component for the dashboard.
 Handles all the visualization and display of prediction results.
 """
 
+import logging
 import streamlit as st
 import pandas as pd
 import numpy as np
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 from .state import DashboardState
 from .risk import RiskLevel
@@ -46,6 +49,8 @@ def display_prediction_results(
     probabilities = state.probabilities
     original_df = state.original_df
     
+    logger.debug(f"Displaying results for {len(predictions)} predictions")
+    
     st.divider()
     st.header("📊 Prediction Results")
     
@@ -55,6 +60,8 @@ def display_prediction_results(
     avg_prob = float(probabilities.mean())
     max_prob = float(probabilities.max())
     overall_risk = RiskLevel.from_probability(avg_prob, threshold)
+    
+    logger.info(f"Results summary - At risk: {num_failures}, Healthy: {num_healthy}, Avg prob: {avg_prob:.3f}, Max prob: {max_prob:.3f}")
     
     # Model confidence: how certain the model is (distance from 0.5)
     # 0.5 = completely uncertain, 0 or 1 = fully confident
