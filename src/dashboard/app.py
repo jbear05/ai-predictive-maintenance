@@ -239,7 +239,7 @@ def main():
     st.divider()
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        run_prediction = st.button("🔮 Predict Equipment Health", type="primary", use_container_width=True)
+        run_prediction = st.button("Predict Equipment Health", type="primary", use_container_width=True)
     
     if run_prediction:
         with st.spinner("Running inference pipeline..."):
@@ -268,6 +268,10 @@ def main():
     # Display results
     state = get_state()
     if state.has_results:
+        # Recalculate predictions if threshold changed (allows live adjustment)
+        if state.threshold != threshold:
+            state.predictions = (state.probabilities >= threshold).astype(int)
+            state.threshold = threshold
         display_prediction_results(state, model, all_features, threshold)
 
 
