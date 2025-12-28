@@ -317,7 +317,28 @@
 - Brief explanation of statistics on dashboard
 
 ### What I Did
-**Afternoong (12pm-6pm):**
+**Afternoon (12pm-6pm):**
+- Fix engineered features number through documentation
+
+### Decisions
+- None
+
+### Problems/Solutions
+- None
+
+### Tomorrow's Plan
+- Brief explanation of statistics on dashboard
+- finish dashboard
+
+
+## Day 14
+
+### Goals for Today
+- Brief explanation of statistics on dashboard
+- finish dashboard
+
+### What I Did
+**Afternoon (12pm-6pm):**
 - 
 
 ### Decisions
