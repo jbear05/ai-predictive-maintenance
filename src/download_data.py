@@ -4,10 +4,13 @@ Download NASA C-MAPSS Dataset - Windows Version
 Step 1.1 of CMMS AI Project
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import os
 import urllib.request
 import zipfile
-import sys
 import typing as t # For type hinting complex structures
 from config import config
 
