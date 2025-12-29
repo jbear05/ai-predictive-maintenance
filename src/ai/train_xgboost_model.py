@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path for loaders and config imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from xgboost import XGBClassifier
 from sklearn.model_selection import GridSearchCV

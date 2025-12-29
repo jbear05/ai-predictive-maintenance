@@ -359,13 +359,13 @@
 
 ### What I Did
 **Afternoon (12pm-6pm):**
-- 
+- pipeline folder and script created
 
 ### Decisions
-- 
+- pipeline will deal with raw data and the dashboard will keep its cleaned and feature engineered data input format.
 
 ### Problems/Solutions
-- 
+- None
 
 ### Tomorrow's Plan
 - 

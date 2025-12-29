@@ -17,7 +17,7 @@ sys.path.insert(0, str(SRC_DIR))
 
 import streamlit as st
 from loaders import load_inference_artifacts
-from inference import predict_failure
+from src.ai.inference import predict_failure
 from config import config
 import warnings
 
