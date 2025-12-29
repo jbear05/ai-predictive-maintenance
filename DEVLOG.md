@@ -339,6 +339,26 @@
 
 ### What I Did
 **Afternoon (12pm-6pm):**
+- Brief explanation of statistics on dashboard
+- finished dashboard
+
+### Decisions
+- None
+
+### Problems/Solutions
+- None
+
+### Tomorrow's Plan
+- main script for demo purposes
+
+
+## Day 15
+
+### Goals for Today
+- main script for demo purposes
+
+### What I Did
+**Afternoon (12pm-6pm):**
 - 
 
 ### Decisions

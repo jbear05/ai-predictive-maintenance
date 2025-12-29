@@ -429,7 +429,7 @@ def main() -> None:
     print("✓ STEP 1.3 DATA PREPARATION COMPLETE")
     print("="*60)
     print(f"\nNext Steps (Project Phase 2: AI Model Development):")
-    print("1. Review final data quality and feature documentation in 'data\\processed'")
+    print("1. Review final data quality and feature documentation in 'data/processed'")
     print("2. Proceed to model training using 'train_processed.csv'")
 
 
