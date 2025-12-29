@@ -3,6 +3,10 @@ Fix Scaler - Refit scaler on combined training data
 Creates a single, consistent scaler for the entire pipeline
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from config import config
