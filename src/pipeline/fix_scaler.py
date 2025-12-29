@@ -5,7 +5,7 @@ Creates a single, consistent scaler for the entire pipeline
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
