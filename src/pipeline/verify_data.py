@@ -4,12 +4,16 @@ Verify NASA C-MAPSS Dataset - Windows Version
 Step 1.1 Verification for CMMS AI Project
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 import pandas as pd
 import numpy as np
 import os
-import sys
 import typing as t
 import traceback
+from config import config
 
 def verify_dataset() -> bool:
     """
@@ -27,8 +31,8 @@ def verify_dataset() -> bool:
     columns: t.List[str] = ['unit_id', 'time_cycles', 'setting_1', 'setting_2', 'setting_3'] + \
                            [f'sensor_{i}' for i in range(1, 22)]
     
-    # Target directory containing all FD files
-    data_dir: str = 'data/raw'
+    # Target directory containing all FD files (using centralized config)
+    data_dir: Path = config.paths.raw_data
     
     # Project requirement from S.M.A.R.T. plan (minimum 50,000 records)
     requirement: int = 50000
@@ -38,8 +42,7 @@ def verify_dataset() -> bool:
     print("NASA C-MAPSS DATASET VERIFICATION (Step 1.1)")
     print("=" * 70)
     
-        # 1. File Existence Check
-    data_dir: str = 'data/raw'
+    # 1. File Existence Check
     train_files: t.List[str] = [f for f in os.listdir(data_dir) if f.startswith('train_FD') and f.endswith('.txt')]
 
     if not train_files:

@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -6,6 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 import joblib
 import time
+from config import config
 
 
 def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series) -> None:
@@ -124,13 +129,16 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
 
     # ========== Save Models ==========
     # Save trained models as pickle files for later use
-    joblib.dump(log_reg, 'models/logistic_model.pkl')
-    joblib.dump(rf_model, 'models/random_forest_model.pkl')
-    print("\n💾 Models saved to /models folder")
+    models_dir = config.paths.models_root
+    results_dir = config.paths.results_root
+    
+    joblib.dump(log_reg, models_dir / 'logistic_model.pkl')
+    joblib.dump(rf_model, models_dir / 'random_forest_model.pkl')
+    print(f"\n💾 Models saved to {models_dir}")
 
     # ========== Generate Comparison Report ==========
     # Write detailed comparison to text file
-    with open('results/model_comparison.txt', 'w') as f:
+    with open(results_dir / 'model_comparison.txt', 'w') as f:
         f.write("=" * 60 + "\n")
         f.write("BASELINE MODEL COMPARISON\n")
         f.write("=" * 60 + "\n\n")
@@ -159,7 +167,7 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
         else:
             f.write("Logistic Regression (Better F1-Score)\n")
 
-    print("✅ Comparison saved to results/model_comparison.txt")
+    print(f"✅ Comparison saved to {results_dir / 'model_comparison.txt'}")
 
 
 def main():

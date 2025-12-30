@@ -1,5 +1,11 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import (
@@ -14,6 +20,7 @@ import joblib
 import json
 from datetime import datetime
 import os
+from config import config
 
 # Set style for professional-looking plots
 sns.set_style("whitegrid")
@@ -435,21 +442,21 @@ def main():
     print("="*70)
     print()
     
-    # Create output directory
-    output_dir = 'results/performance_report'
+    # Create output directory using centralized config
+    output_dir = config.paths.results_root / 'performance_report'
     os.makedirs(output_dir, exist_ok=True)
     print(f"📁 Output directory: {output_dir}")
     print()
     
     # Load model
     print("Loading model...")
-    model = joblib.load('models/xgboost_model.pkl')
+    model = joblib.load(config.paths.models_root / 'xgboost_model.pkl')
     print("✅ Model loaded")
     print()
     
     # Load validation data
     print("Loading validation data...")
-    val_data = pd.read_csv('data/processed/val_processed.csv')
+    val_data = pd.read_csv(config.paths.val_file)
     print(f"✅ Loaded {len(val_data):,} validation samples")
     print()
     

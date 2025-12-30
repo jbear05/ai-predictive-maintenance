@@ -4,12 +4,17 @@ Clean NASA C-MAPSS Dataset - Windows Version
 Step 1.2 Data Cleaning for CMMS AI Project
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 import pandas as pd
 import numpy as np
 from scipy import stats
 from sklearn.preprocessing import MinMaxScaler
 import os
 import typing as t
+from config import config
 
 def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -140,9 +145,9 @@ def main() -> None:
     """
     
     # --- Configuration ---
-    # Define input and output paths
-    INPUT_DIR: str = "./data/raw"
-    OUTPUT_DIR: str = "./data/processed"
+    # Define input and output paths using centralized config
+    INPUT_DIR: Path = config.paths.raw_data
+    OUTPUT_DIR: Path = config.paths.processed_data
 
     # Get all train files
     train_files: t.List[str] = [f for f in os.listdir(INPUT_DIR) if f.startswith('train_FD') and f.endswith('.txt')]

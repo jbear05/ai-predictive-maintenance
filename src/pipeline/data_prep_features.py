@@ -422,9 +422,9 @@ def main() -> None:
     
     # Step 5: Save datasets and documentation
     print("\n[STEP 5] Saving processed datasets and documentation...")
-    prep.save_datasets(output_dir='data/processed')
+    prep.save_datasets(output_dir=str(config.paths.processed_data))
 
-    df = pd.read_csv('data/processed/val_processed.csv')
+    df = pd.read_csv(config.paths.val_file)
     unit_249 = df[df['unit_id'] == 249]
     print(unit_249[['time_cycles', 'cycle_normalized']].tail(20))
     
@@ -432,8 +432,8 @@ def main() -> None:
     print("✓ STEP 1.3 DATA PREPARATION COMPLETE")
     print("="*60)
     print(f"\nNext Steps (Project Phase 2: AI Model Development):")
-    print("1. Review final data quality and feature documentation in 'data/processed'")
-    print("2. Proceed to model training using 'train_processed.csv'")
+    print(f"1. Review final data quality and feature documentation in '{config.paths.processed_data}'")
+    print(f"2. Proceed to model training using '{config.paths.train_file}'")
 
 
 if __name__ == "__main__":

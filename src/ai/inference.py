@@ -223,7 +223,7 @@ def test_inference_pipeline():
     
     # Load some validation data to test with
     print("\n📂 Loading validation data for testing...")
-    val_data = pd.read_csv('data/processed/val_processed.csv')
+    val_data = pd.read_csv(config.paths.val_file)
     
     # Take a small sample for quick testing
     test_sample = val_data.sample(n=100, random_state=42)
