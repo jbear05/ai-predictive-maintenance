@@ -132,6 +132,10 @@ def train_xgboost_model(
     print(f"Class distribution: {dict(zip(unique, counts))}")
 
     # Calculate scale_pos_weight for XGBoost
+    #check that there are exactly 2 classes
+    if len(counts) != 2:
+        raise ValueError(f"Expected 2 classes, found {len(unique)}: {unique}")
+    
     negative_cases : int = counts[0]
     positive_cases : int = counts[1]
     scale_pos_weight : float = negative_cases / positive_cases
