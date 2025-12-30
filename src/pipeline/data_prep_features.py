@@ -232,7 +232,7 @@ class CMAPSSDataPreparator:
         
         # Cycle normalization (how far through its life is this unit?)
         new_features['cycle_normalized'] = df.groupby('unit_id')['time_cycles'].transform(
-            lambda x: x / x.max()
+            lambda x: x / x.max() if x.max() > 0 else 0
         )
         
         # Single concat operation (much faster than repeated concat in loop)
