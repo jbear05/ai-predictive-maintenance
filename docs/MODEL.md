@@ -69,18 +69,18 @@ Created **152 new features** from 21 raw sensors to capture degradation patterns
 ```
                 Predicted
              Healthy  Failure
-Actual Healthy  25,337   1,334  (false alarms)
-Actual Failure      61   3,453  (caught failures)
+Actual Healthy  25,382   1,289  (false alarms)
+Actual Failure      71   3,443  (caught failures)
 ```
 
-**Translation:** Out of 3,514 actual failures, the model caught 3,453 (98.0%) and missed only 61 (2.0%).
+**Translation:** Out of 3,514 actual failures, the model caught 3,443 (98.0%) and missed only 71 (2.0%).
 
 ### Key Metrics Explained
 
 - **Recall (98.0%):** Catches 98 out of 100 real failures ⭐
-- **Precision (72.5%):** When it predicts failure, it's right 73% of the time
-- **ROC AUC (0.99):** Near-perfect ability to separate failures from healthy equipment
-- **Average Precision (0.94):** 9x better than random guessing
+- **Precision (72.8%):** When it predicts failure, it's right 73% of the time
+- **ROC AUC (0.9942):** Near-perfect ability to separate failures from healthy equipment
+- **Average Precision (0.9612):** ~10x better than random guessing
 
 ## How to Use the Model
 
@@ -138,11 +138,11 @@ probabilities = model.predict_proba(X_new)[:, 1]  # 0.0 to 1.0
 
 | Feature | Importance | What It Measures |
 |---------|------------|------------------|
-| cycle_normalized | 59.8% | Equipment lifecycle position* |
-| sensor_11_roll_std_5 | 1.0% | Sensor 11 volatility |
-| sensor_15_roll_std_5 | 0.9% | Sensor 15 volatility |
-| sensor_7_roll_std_5 | 0.9% | Sensor 7 volatility |
-| sensor_2_dev_baseline | 0.8% | Sensor 2 drift from normal |
+| cycle_normalized | 71.0% | Equipment lifecycle position* |
+| sensor_10_ema | 3.2% | Sensor 10 exponential moving average |
+| sensor_10_dev_baseline | 2.3% | Sensor 10 drift from normal |
+| sensor_15 | 2.1% | Raw sensor 15 reading |
+| sensor_max_all | 2.1% | Maximum value across all sensors |
 
 *See Limitations section
 
@@ -152,7 +152,7 @@ probabilities = model.predict_proba(X_new)[:, 1]  # 0.0 to 1.0
 
 ### Known Issues
 
-1. **Cycle Normalization Feature (59.8% importance)**
+1. **Cycle Normalization Feature (71.0% importance)**
    - Requires knowing total lifecycle length in advance
    - Works in simulation but unavailable in real production
    - Would need removal + retraining for actual deployment
@@ -204,9 +204,9 @@ probabilities = model.predict_proba(X_new)[:, 1]  # 0.0 to 1.0
 
 Located in `results/performance_report/`:
 - Confusion matrix visualization
-- ROC curve (AUC = 0.9929)
+- ROC curve (AUC = 0.9942)
 - Top 20 feature importance chart
-- Precision-Recall curve (AP = 0.9412)
+- Precision-Recall curve (AP = 0.9612)
 - Complete metrics summary
 
 ## Future Improvements
@@ -230,9 +230,9 @@ Located in `results/performance_report/`:
 
 **Model Performance:**
 - Accuracy: 95.5%
-- Recall: 98.3% (only 1.7% of failures missed)
-- Precision: 72.5% (27% false alarm rate)
-- ROC AUC: 0.99
+- Recall: 98.0% (only 2.0% of failures missed)
+- Precision: 72.8% (27% false alarm rate)
+- ROC AUC: 0.9942
 
 **Training Data:**
 - 157K sensor readings, 260 engines
@@ -248,6 +248,6 @@ Located in `results/performance_report/`:
 
 ---
 
-**Last Updated:** December 25, 2024  
+**Last Updated:** December 26, 2025  
 **Version:** 1.2 (Production Ready)  
 **Status:** Phase 1 Complete ✅ | Dashboard Deployed ✅
