@@ -368,4 +368,23 @@
 - None
 
 ### Tomorrow's Plan
+- finish project
+
+
+## Day 16
+
+### Goals for Today
+- finish project
+
+### What I Did
+**Afternoon (12pm-6pm):**
+- 
+
+### Decisions
+- 
+
+### Problems/Solutions
+- 
+
+### Tomorrow's Plan
 - 
