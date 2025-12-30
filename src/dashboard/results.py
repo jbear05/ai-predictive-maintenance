@@ -25,6 +25,38 @@ from .charts import (
 )
 
 
+def _calculate_risk_score(probability: float, threshold: float) -> float:
+    """
+    Calculate a normalized risk score (0-100) based on probability and threshold.
+    
+    Maps the probability to a 0-100 scale where:
+    - 0 to threshold*0.6 → 0-30 (Low zone)
+    - threshold*0.6 to threshold → 30-70 (Medium zone)  
+    - threshold to 1.0 → 70-100 (High zone)
+    
+    This makes the gauge meaningful relative to the user's chosen threshold.
+    """
+    low_boundary = threshold * 0.6
+    
+    if probability < low_boundary:
+        # Low zone: 0 to 30
+        if low_boundary > 0:
+            return (probability / low_boundary) * 30
+        return 0
+    elif probability < threshold:
+        # Medium zone: 30 to 70
+        range_size = threshold - low_boundary
+        if range_size > 0:
+            return 30 + ((probability - low_boundary) / range_size) * 40
+        return 50
+    else:
+        # High zone: 70 to 100
+        range_size = 1 - threshold
+        if range_size > 0:
+            return 70 + ((probability - threshold) / range_size) * 30
+        return 100
+
+
 def display_prediction_results(
     state: DashboardState,
     model,
@@ -58,10 +90,11 @@ def display_prediction_results(
     num_failures = int(predictions.sum())
     num_healthy = int((predictions == 0).sum())
     avg_prob = float(probabilities.mean())
+    median_prob = float(np.median(probabilities))
     max_prob = float(probabilities.max())
     overall_risk = RiskLevel.from_probability(avg_prob, threshold)
     
-    logger.info(f"Results summary - At risk: {num_failures}, Healthy: {num_healthy}, Avg prob: {avg_prob:.3f}, Max prob: {max_prob:.3f}")
+    logger.info(f"Results summary - At risk: {num_failures}, Healthy: {num_healthy}, Avg prob: {avg_prob:.3f}, Median prob: {median_prob:.3f}, Max prob: {max_prob:.3f}")
     
     # Model confidence: how certain the model is (distance from 0.5)
     # 0.5 = completely uncertain, 0 or 1 = fully confident
@@ -74,10 +107,10 @@ def display_prediction_results(
         st.success("✅ **ALL SYSTEMS HEALTHY:** No immediate failures predicted")
     
     # Primary metrics row
-    _display_primary_metrics(model_confidence, overall_risk, avg_prob)
-    
+    _display_primary_metrics(model_confidence, overall_risk, avg_prob, threshold)
+
     # Secondary metrics row
-    _display_secondary_metrics(num_failures, num_healthy, avg_prob, max_prob, len(predictions), threshold)
+    _display_secondary_metrics(num_failures, num_healthy, median_prob, max_prob, len(predictions), threshold)
     
     # Charts section
     _display_charts(probabilities, avg_prob, threshold, model, all_features, overall_risk)
@@ -93,7 +126,7 @@ def display_prediction_results(
     _display_downloads(results_df)
 
 
-def _display_primary_metrics(model_confidence: float, overall_risk: RiskLevel, avg_prob: float) -> None:
+def _display_primary_metrics(model_confidence: float, overall_risk: RiskLevel, avg_prob: float, threshold: float) -> None:
     """Display the first row of metrics as gauges."""
     col1, col2, col3 = st.columns(3)
     
@@ -105,11 +138,13 @@ def _display_primary_metrics(model_confidence: float, overall_risk: RiskLevel, a
             suffix="%",
             invert_color=True  # High confidence is good
         )
-        st.plotly_chart(fig, use_container_width=True, key="gauge_confidence")
+        st.plotly_chart(fig, width="stretch", key="gauge_confidence")
         st.markdown("<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ How certain the model is in its predictions (higher = more decisive)</p>", unsafe_allow_html=True)
     
     with col2:
-        fleet_health = (1 - avg_prob) * 100
+        # Calculate normalized health score (inverse of risk score)
+        risk_score = _calculate_risk_score(avg_prob, threshold)
+        fleet_health = 100 - risk_score
         fig = create_mini_gauge(
             value=fleet_health,
             title="Fleet Health Score",
@@ -117,19 +152,20 @@ def _display_primary_metrics(model_confidence: float, overall_risk: RiskLevel, a
             suffix="/100",
             invert_color=True  # High health is good
         )
-        st.plotly_chart(fig, use_container_width=True, key="gauge_health")
-        st.markdown("<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Overall equipment fleet health (inverse of avg risk)</p>", unsafe_allow_html=True)
+        st.plotly_chart(fig, width="stretch", key="gauge_health")
+        st.markdown("<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Overall equipment fleet health (based on threshold)</p>", unsafe_allow_html=True)
     
     with col3:
-        # Risk level gauge (use avg_prob for the gauge value)
+        # Risk level gauge using normalized score
+        risk_score = _calculate_risk_score(avg_prob, threshold)
         fig = create_mini_gauge(
-            value=avg_prob * 100,
+            value=risk_score,
             title=f"Risk Level: {overall_risk.label}",
             max_value=100,
             suffix="%",
             invert_color=False  # High risk is bad
         )
-        st.plotly_chart(fig, use_container_width=True, key="gauge_risk")
+        st.plotly_chart(fig, width="stretch", key="gauge_risk")
         st.markdown("<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Overall fleet risk assessment based on threshold</p>", unsafe_allow_html=True)
     
     st.divider()
@@ -138,7 +174,7 @@ def _display_primary_metrics(model_confidence: float, overall_risk: RiskLevel, a
 def _display_secondary_metrics(
     num_failures: int,
     num_healthy: int,
-    avg_prob: float,
+    median_prob: float,
     max_prob: float,
     total: int,
     threshold: float
@@ -153,7 +189,7 @@ def _display_secondary_metrics(
             title="🔴 At Risk",
             is_risk=True
         )
-        st.plotly_chart(fig, use_container_width=True, key="gauge_at_risk")
+        st.plotly_chart(fig, width="stretch", key="gauge_at_risk")
         st.markdown(f"<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Units with probability ≥ {threshold:.0%}</p>", unsafe_allow_html=True)
     
     with col2:
@@ -163,29 +199,31 @@ def _display_secondary_metrics(
             title="🟢 Healthy",
             is_risk=False
         )
-        st.plotly_chart(fig, use_container_width=True, key="gauge_healthy")
+        st.plotly_chart(fig, width="stretch", key="gauge_healthy")
         st.markdown(f"<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Units with probability < {threshold:.0%}</p>", unsafe_allow_html=True)
     
     with col3:
+        median_risk_score = median_prob * 100
         fig = create_mini_gauge(
-            value=avg_prob * 100,
-            title="Avg Risk Score",
+            value=median_risk_score,
+            title="Median Risk Score",
             max_value=100,
             suffix="%",
             invert_color=False
         )
-        st.plotly_chart(fig, use_container_width=True, key="gauge_avg_risk")
-        st.markdown("<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Mean failure probability across all units</p>", unsafe_allow_html=True)
+        st.plotly_chart(fig, width="stretch", key="gauge_median_risk")
+        st.markdown("<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Median risk score (less sensitive to outliers)</p>", unsafe_allow_html=True)
     
     with col4:
+        max_risk_score = max_prob * 100
         fig = create_mini_gauge(
-            value=max_prob * 100,
+            value=max_risk_score,
             title="Max Risk Score",
             max_value=100,
             suffix="%",
             invert_color=False
         )
-        st.plotly_chart(fig, use_container_width=True, key="gauge_max_risk")
+        st.plotly_chart(fig, width="stretch", key="gauge_max_risk")
         st.markdown("<p style='text-align: center; color: gray; font-size: 0.85em;'>ℹ️ Highest individual unit risk</p>", unsafe_allow_html=True)
     
     st.divider()
@@ -203,7 +241,7 @@ def _display_charts(
     # Row 1: Histogram (full width now)
     st.subheader("Risk Score Distribution")
     fig_hist = create_risk_histogram(probabilities, threshold)
-    st.plotly_chart(fig_hist, use_container_width=True)
+    st.plotly_chart(fig_hist, width="stretch")
     
     st.divider()
     
@@ -213,7 +251,7 @@ def _display_charts(
     with col1:
         st.subheader("Top Contributing Factors")
         fig_importance = create_feature_importance_chart(model, all_features, top_n=10)
-        st.plotly_chart(fig_importance, use_container_width=True)
+        st.plotly_chart(fig_importance, width="stretch")
     
     with col2:
         st.subheader("Status Indicator")
@@ -265,7 +303,7 @@ def _display_time_series(original_df: pd.DataFrame, probabilities: np.ndarray) -
     if high_risk_units and sensor_cols:
         fig = create_sensor_timeseries(original_df, high_risk_units, sensor_cols)
         if fig:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.info("Unable to generate time series plots - insufficient data")
     else:
@@ -312,7 +350,7 @@ def _display_results_table(results_df: pd.DataFrame) -> None:
     
     st.dataframe(
         filtered_df.head(100),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=400
     )
@@ -333,7 +371,7 @@ def _display_downloads(results_df: pd.DataFrame) -> None:
             data=results_df.to_csv(index=False),
             file_name="predictions_results.csv",
             mime="text/csv",
-            use_container_width=True
+            width="stretch"
         )
     
     with col2:
@@ -343,5 +381,5 @@ def _display_downloads(results_df: pd.DataFrame) -> None:
             data=high_risk_df.to_csv(index=False),
             file_name="high_risk_units.csv",
             mime="text/csv",
-            use_container_width=True
+            width="stretch"
         )

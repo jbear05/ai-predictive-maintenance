@@ -130,7 +130,7 @@ def _render_upload_section(columns_to_scale: list) -> tuple:
     
     # Data preview section
     with st.expander("📋 Data Preview", expanded=False):
-        st.dataframe(df.head(10), use_container_width=True)
+        st.dataframe(df.head(10), width="stretch")
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -261,7 +261,7 @@ def main():
     st.divider()
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        run_prediction = st.button("Predict Equipment Health", type="primary", use_container_width=True)
+        run_prediction = st.button("Predict Equipment Health", type="primary", width="stretch")
     
     if run_prediction:
         logger.info(f"Starting prediction on {len(df)} samples with threshold {threshold}")
