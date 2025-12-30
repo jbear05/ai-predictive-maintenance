@@ -127,10 +127,6 @@ def _render_upload_section(columns_to_scale: list) -> tuple:
         logger.warning(f"File validation failed: {e}")
         st.error(f"❌ {e}")
         return None, False
-        df = validate_uploaded_file(uploaded_file)
-    except ValueError as e:
-        st.error(f"❌ {e}")
-        return None, False
     
     # Data preview section
     with st.expander("📋 Data Preview", expanded=False):
