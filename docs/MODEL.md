@@ -43,7 +43,7 @@ Created **152 new features** from 21 raw sensors to capture degradation patterns
 7. **Statistical Aggregates** (4 features): Overall system health
 8. **Cycle Normalized** (1 feature): Position in lifecycle
 
-**Final:** 197 predictive features used for training
+**Final:** 197 predictive features used for training (engineered features + original/raw features)
 
 ## Model Performance
 
