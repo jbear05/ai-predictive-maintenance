@@ -89,9 +89,9 @@ If you just want to **see the system in action**, follow these steps:
 4. Run:
    ```bash
    pip install -r requirements.txt
-   python run_dashboard.py
+   python run_pipeline.py
    ```
-5. Open your web browser to `http://localhost:8050`
+5. Wait for data to be downloaded and processed and dashboard to open up
 
 ### For Technical Users
 
@@ -109,7 +109,7 @@ python run_pipeline.py
 # Or run with existing data (skips download)
 python run_pipeline.py --skip-download
 
-# Launch the interactive dashboard
+# Or launch the interactive dashboard if you already have processed csv data
 python run_dashboard.py
 ```
 
