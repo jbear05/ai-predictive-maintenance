@@ -25,7 +25,7 @@ import sys
 import os
 from pathlib import Path
 import argparse
-from src.pipeline.terminal_colors import print_error, print_success, print_warning, print_header, Colors
+from terminal_colors import print_error, print_success, print_warning, print_header, Colors
 
 
 def run_script(script_path: Path, description: str) -> bool:

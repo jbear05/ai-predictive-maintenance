@@ -15,7 +15,7 @@ from sklearn.preprocessing import MinMaxScaler
 import os
 import typing as t
 from config import config
-from src.pipeline.terminal_colors import Colors, print_header, print_success, print_warning, print_error
+from terminal_colors import Colors, print_header, print_success, print_warning, print_error
 
 
 def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:

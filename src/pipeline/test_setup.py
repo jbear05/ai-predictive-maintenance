@@ -5,6 +5,9 @@ Verify all required packages are installed
 """
 
 import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 import types # Import types for robust checking
 import importlib.metadata
 from terminal_colors import Colors, print_error, print_success, print_warning, print_header
