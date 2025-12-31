@@ -209,7 +209,7 @@ def main() -> None:
         except Exception as e:
             print_error(f"❌ An error occurred while saving the file: {e}")
 
-    print_success(f"\nALL FILES PROCESSED\n")
+    print_success(f"ALL FILES PROCESSED\n")
 
     
 

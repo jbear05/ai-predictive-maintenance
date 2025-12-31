@@ -266,17 +266,19 @@ Examples:
             print_success(f"Pipeline complete! {steps_completed}/{total_steps-1} steps succeeded.")
             print("\n🚀 Launching prediction dashboard...")
             print("   Press Ctrl+C to stop the dashboard\n")
-            run_script(dashboard_script, "Launch Streamlit prediction dashboard")
+            
+            try:
+                run_script(dashboard_script, "Launch Streamlit prediction dashboard")
+            except KeyboardInterrupt:
+                print_warning(f"Dashboard stopped by user")
         else:
-            print_warning(f"Dashboard script not found: {dashboard_script}")
+            print_error(f"Dashboard script not found: {dashboard_script}")
     
     # =========================================================================
     # Final Summary
     # =========================================================================
     print(f"\n{'='*70}")
-    print(f"{Colors.BOLD}{Colors.GREEN}")
-    print("    ✅ PIPELINE EXECUTION COMPLETE!")
-    print(f"{Colors.END}")
+    print_success("PIPELINE EXECUTION COMPLETE!")
     print(f"{'='*70}")
     print(f"\nSteps Completed: {steps_completed}/{total_steps if args.no_dashboard else total_steps-1}")
     print(f"\nOutput Files:")

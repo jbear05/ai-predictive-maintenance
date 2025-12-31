@@ -22,7 +22,11 @@ def main():
         sys.exit(1)
     
     print(f"Starting dashboard from {app_path}...")
-    subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path)])
+    
+    try:
+        subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path)])
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
