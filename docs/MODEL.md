@@ -129,6 +129,11 @@ probabilities = model.predict_proba(X_new)[:, 1]  # 0.0 to 1.0
 - Handles 9:1 class imbalance via `scale_pos_weight=8.73`
 - Selected from 108 parameter combinations via grid search
 
+**Parameter Selection:**
+- The main XGBoost hyperparameters (number of trees, tree depth, learning rate, subsample ratios, etc.) were selected using an extensive grid search with cross-validation. The grid included `max_depth` values of 3, 5, and 7.
+- The final model uses `max_depth=3` because grid search showed that many shallow trees (depth 3) provided the best recall and generalization for this time-series predictive maintenance task. Deeper trees (5 or 7) tended to overfit and did not improve recall on the validation set.
+- This approach ensures the model is robust, prioritizes catching failures, and avoids overfitting to noise or rare patterns in the training data.
+
 **Why These Settings Work:**
 - Many shallow trees > few deep trees for time-series patterns
 - Slow learning rate improves generalization
