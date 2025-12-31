@@ -88,9 +88,6 @@ models/*
 !models/scaler_columns.json
 !models/scaler.pkl
 !models/xgboost_model.pkl
-models/*.pkl
-models/*.h5
-models/*.joblib
 *.pkl
 *.joblib
 *.json
