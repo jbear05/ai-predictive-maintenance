@@ -27,6 +27,7 @@ This project uses artificial intelligence (AI) to analyze data from equipment se
 | **Overall Accuracy** | **95.5%** | The system makes the correct prediction 95 out of 100 times |
 | **Advance Warning** | **1-2 weeks** | You get notified about a potential failure up to 2 weeks before it occurs |
 | **False Alarm Rate** | **27%** | About 1 in 4 warnings turns out to be a false alarm (better safe than sorry!) |
+| **Precision** | **73%** | When the system predicts a failure, it is correct 73% of the time. |
 
 ---
 
