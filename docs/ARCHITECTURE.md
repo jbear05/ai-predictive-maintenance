@@ -142,6 +142,97 @@ ai-predictive-maintenance/
 └── docs/                    # Documentation
 ```
 
+## Air-gapped deployment readiness
+### ✅ What's Already Air-Gap Compatible
+**1. Zero Cloud Dependencies**
+- Local Inference: All ML inference runs locally using joblib.load() for models
+- Localhost Hosting: Dashboard operates on localhost:8050 with no internet requirements
+- No Telemetry: No external API calls, cloud storage, or telemetry
+
+**2. Self-Contained Artifacts**
+```
+models/
+├── xgboost_model.pkl       # Complete trained model (~50MB)
+├── scaler.pkl              # Preprocessing state
+└── scaler_columns.json     # Feature schema metadata
+```
+
+**3. Reproducible Environment**
+- requirements.txt with pinned dependency versions
+- Virtual environment for isolated deployment
+- No dynamic package resolution at runtime
+
+**4. Basic Security Controls**
+- 100MB max uploads
+- Row/column limits to prevent resource exhaustion
+- 500MB max usage
+- Robust CSV parsing
+
+
+### ⚠️ Critical Gaps for DOE Deployment (6-8 weeks to resolve)
+
+#### Phase 1: Security Essentials (3 weeks)
+
+**Dependency Vendoring (CRITICAL):**
+
+- Current: pip install requires internet access.
+- Need: wheels/ directory with all packages for offline installation.
+- Implementation: pip download -r requirements.txt -d ./wheels/
+
+**Model Integrity Verification (CRITICAL):**
+
+- Current: joblib.load() can execute arbitrary code during unpickling.
+- Need: HMAC-SHA256 signatures + SHA256SUMS checksums.
+- Risk: Malicious model replacement could execute code.
+
+**User Authentication & RBAC (CRITICAL):**
+
+- Current: No authentication—anyone can access dashboard.
+- Need: Role-based access control (Viewer/Engineer/Admin roles).
+- Integration: Link to site LDAP/Active Directory.
+
+**Comprehensive Audit Logging (CRITICAL):**
+
+- Current: Minimal logging.
+- Need: Tamper-evident logs capturing WHO, WHAT, WHEN for every operation.
+- Format: JSON logs with file hashes, usernames, timestamps, predictions.
+
+#### Phase 2: Data Security (2 weeks)
+
+**Enhanced Input Validation:**
+
+- Add file signature verification (magic bytes).
+- Implement CSV sandboxing with bounds checking.
+- Validate sensor ranges against physical limits (e.g., temperature 400-700°R).
+
+**Network Isolation Verification:**
+
+- Add startup check to verify air-gap (fail if network detected).
+- Test against known external IPs (8.8.8.8, pypi.org, github.com).
+
+#### Phase 3: Operations (2 weeks)
+
+**Immutable Model Deployment:**
+
+- Make models read-only: chmod 444 models/*.pkl
+- Use chattr +i (Linux) or icacls /deny (Windows).
+- Prevent modification even by administrators.
+
+**Installation Documentation:**
+
+- Create INSTALL_AIRGAP.md with offline transfer procedures.
+- Document "Two-Person Integrity" for media transfer.
+- Include GPG signature verification steps.
+
+#### Phase 4: Compliance (1 week)
+
+**Security Documentation:**
+
+- System Security Plan (SSP).
+- NIST 800-171 controls mapping.
+- Threat model with mitigations.
+- Incident response procedures.
+
 ## Key Lessons Learned
 
 ### Scaler Consistency is Critical
@@ -173,6 +264,7 @@ ai-predictive-maintenance/
 
 ### Next Steps ⏳
 - Production deployment (without cycle_normalized)
+- Air-gapped deployment preparation
 - Flask API development (REST endpoints)
 - 3D Unity Simulation with interactive scenarios
 - Multi-Agent system (Anomaly Agent, Root Cause Agent, etc)
