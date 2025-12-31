@@ -198,15 +198,10 @@ def _render_instructions(columns_to_scale: list) -> None:
         3. **Click** "Predict Equipment Health"
         4. **Analyze** results and risk scores
         5. **Download** predictions for further action
-        
-        💡 **Risk Levels:**
-        - 🟢 Low (0-30%): Normal operation
-        - 🟡 Medium (30-70%): Monitor closely
-        - 🔴 High (70-100%): Immediate attention required
         """)
     
     with st.expander("🔍 View All Required Feature Columns"):
-        st.write(f"The model requires **{len(columns_to_scale)}** feature columns:")
+        st.write(f"The model requires **{len(columns_to_scale)}** feature columns (also see models/scaler_columns.json for detailed list):")
         
         feature_groups = _group_features(tuple(columns_to_scale))
         
