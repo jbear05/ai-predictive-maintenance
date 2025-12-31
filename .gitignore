@@ -84,6 +84,10 @@ data/processed/*.txt
 *.hdf5
 
 # Model files (large trained models)
+models/*
+!models/scaler_columns.json
+!models/scaler.pkl
+!models/xgboost_model.pkl
 models/*.pkl
 models/*.h5
 models/*.joblib
