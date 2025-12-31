@@ -88,9 +88,7 @@ models/*
 !models/scaler_columns.json
 !models/scaler.pkl
 !models/xgboost_model.pkl
-*.pkl
 *.joblib
-*.json
 
 # Logs
 *.log
