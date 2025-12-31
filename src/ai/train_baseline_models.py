@@ -11,6 +11,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import joblib
 import time
 from config import config
+from terminal_colors import Colors, print_header, print_success, print_warning, print_error
 
 
 def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series) -> None:
@@ -51,10 +52,10 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
     - Performance metrics include: accuracy, precision, recall, and F1-score
     
     """
-    print("🚀 Starting baseline model training...\n")
+    print_header("Starting baseline model training")
 
     # ========== Logistic Regression Training ==========
-    print("\n🚀 Training Logistic Regression...")
+    print_header("Training Logistic Regression")
     start_time = time.time()
 
     # Create the logistic regression model
@@ -73,7 +74,7 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
 
     # Record training time
     log_reg_time : float = time.time() - start_time
-    print(f"✅ Training completed in {log_reg_time:.2f} seconds")
+    print_success(f"Training completed in {log_reg_time:.2f} seconds")
 
     # Make predictions on test set
     y_pred_log = log_reg.predict(X_test)
@@ -84,14 +85,14 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
     log_recall = recall_score(y_test, y_pred_log)          # True positives / All actual positives
     log_f1 = f1_score(y_test, y_pred_log)                  # Harmonic mean of precision and recall
 
-    print("\n📊 Logistic Regression Results:")
+    print_header("Logistic Regression Results")
     print(f"Accuracy:  {log_accuracy:.3f}")
     print(f"Precision: {log_precision:.3f}")
     print(f"Recall:    {log_recall:.3f}")
     print(f"F1-Score:  {log_f1:.3f}")
 
     # ========== Random Forest Training ==========
-    print("\n🚀 Training Random Forest...")
+    print_header("Training Random Forest")
     start_time : float = time.time()
 
     # Create the random forest model
@@ -110,7 +111,7 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
 
     # Record training time
     rf_time = time.time() - start_time
-    print(f"✅ Training completed in {rf_time:.2f} seconds")
+    print_success(f"Training completed in {rf_time:.2f} seconds")
 
     # Make predictions on test set
     y_pred_rf = rf_model.predict(X_test)
@@ -121,7 +122,7 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
     rf_recall    : float = recall_score(y_test, y_pred_rf)
     rf_f1        : float = f1_score(y_test, y_pred_rf)
 
-    print("\n📊 Random Forest Results:")
+    print_header("Random Forest Results")
     print(f"Accuracy:  {rf_accuracy:.3f}")
     print(f"Precision: {rf_precision:.3f}")
     print(f"Recall:    {rf_recall:.3f}")
@@ -134,7 +135,7 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
     
     joblib.dump(log_reg, models_dir / 'logistic_model.pkl')
     joblib.dump(rf_model, models_dir / 'random_forest_model.pkl')
-    print(f"\n💾 Models saved to {models_dir}")
+    print_success(f"Models saved to {models_dir}")
 
     # ========== Generate Comparison Report ==========
     # Write detailed comparison to text file
@@ -167,7 +168,7 @@ def train_baseline_models(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.
         else:
             f.write("Logistic Regression (Better F1-Score)\n")
 
-    print(f"✅ Comparison saved to {results_dir / 'model_comparison.txt'}")
+    print_success(f"Comparison saved to {results_dir / 'model_comparison.txt'}")
 
 
 def main():
@@ -214,9 +215,9 @@ def main():
     y_test  : pd.Series = val_df['target']
     
     # Display dataset information
-    print(f"✅ Train: {len(X_train)} samples")
-    print(f"✅ Val: {len(X_test)} samples")
-    print(f"✅ Features: {X_train.shape[1]} columns")
+    print_success(f"Train: {len(X_train)} samples")
+    print_success(f"Val: {len(X_test)} samples")
+    print_success(f"Features: {X_train.shape[1]} columns")
     
     # Train and evaluate baseline models
     train_baseline_models(X_train, y_train, X_test, y_test)

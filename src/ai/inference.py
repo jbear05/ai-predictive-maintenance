@@ -11,6 +11,8 @@ from typing import Dict, Tuple, Union
 import warnings
 from loaders import load_inference_artifacts
 from config import config
+from terminal_colors import Colors, print_header, print_success, print_warning, print_error
+
 warnings.filterwarnings('ignore') # Suppress sklearn warnings for cleaner output
 
 def load_artifacts() -> Tuple[object, object, list, list]:
@@ -49,7 +51,7 @@ def preprocess_sensor_data(
     pd.DataFrame
         Preprocessed data ready for prediction
     """
-    print("\n--- Preprocessing Data ---")
+    print_header("--- Preprocessing Data ---")
     
     # Make a copy so we don't modify the original
     data_processed = data.copy()
@@ -58,10 +60,10 @@ def preprocess_sensor_data(
     # Your training data had 0.00% missing, but real-world data might not
     missing_before = data_processed.isnull().sum().sum()
     if missing_before > 0:
-        print(f"⚠️  Warning: {missing_before} missing values detected")
+        print_warning(f"Warning: {missing_before} missing values detected")
         # Strategy: Fill with column mean (same as training would do)
         data_processed = data_processed.fillna(data_processed.mean())
-        print("   Filled missing values with column means")
+        print_success("Filled missing values with column means")
     
     # STEP 2: Apply the saved scaler
     # This is THE most critical step for inference
@@ -70,9 +72,9 @@ def preprocess_sensor_data(
         data_processed[columns_to_scale] = scaler.transform(
             data_processed[columns_to_scale]
         )
-        print(f"✅ Scaled {len(columns_to_scale)} columns")
+        print_success(f"Scaled {len(columns_to_scale)} columns")
     except KeyError as e:
-        print(f"❌ Error: Missing required columns: {e}")
+        print_error(f"Error: Missing required columns: {e}")
         raise
 
     data_processed[columns_to_scale] = data_processed[columns_to_scale].clip(0, 1)
@@ -85,7 +87,7 @@ def preprocess_sensor_data(
     
     # Sanity check: scaled values should be roughly 0-1
     if scaled_min < -0.1 or scaled_max > 1.1:
-        print("⚠️  Warning: Scaled values outside expected range [0, 1]")
+        print_warning("Warning: Scaled values outside expected range [0, 1]")
         print("   This might indicate data distribution shift")
     
     return data_processed
@@ -131,9 +133,8 @@ def predict_failure(
     >>> print(f"Prediction: {predictions[0]}, Confidence: {probabilities[0]:.2%}")
     Prediction: 1, Confidence: 87.3%
     """
-    print("\n" + "="*60)
-    print("RUNNING INFERENCE PIPELINE")
-    print("="*60)
+
+    print_header("RUNNING INFERENCE PIPELINE")
     
     # 1. Validate input type
     if not isinstance(data, pd.DataFrame):
@@ -174,7 +175,7 @@ def predict_failure(
     columns_to_drop = [col for col in columns_to_drop if col in data_processed.columns]
     
     if columns_to_drop:
-        print(f"\n🗑️  Dropping non-predictive columns: {columns_to_drop}")
+        print(f"\nDropping non-predictive columns: {columns_to_drop}")
         X = data_processed.drop(columns_to_drop, axis=1)
     else:
         X = data_processed
@@ -183,7 +184,7 @@ def predict_failure(
     print(f"Expected features: {model.n_features_in_}")
     
     # Make predictions
-    print("\n🔮 Making predictions...")
+    print("\nMaking predictions...")
     predictions = model.predict(X)
     
     # Get probability scores
@@ -191,7 +192,7 @@ def predict_failure(
         probabilities = model.predict_proba(X)[:, 1]  # Probability of class 1 (failure)
         
         # Summary statistics
-        print(f"\n📊 Prediction Summary:")
+        print(f"\n{Colors.BOLD}Prediction Summary:{Colors.END}")
         print(f"   Total samples: {len(predictions)}")
         print(f"   Predicted failures: {predictions.sum()} ({predictions.sum()/len(predictions)*100:.1f}%)")
         print(f"   Predicted healthy: {(predictions==0).sum()} ({(predictions==0).sum()/len(predictions)*100:.1f}%)")
@@ -214,15 +215,14 @@ def test_inference_pipeline():
     3. Predictions match expected format
     4. Performance metrics are reasonable
     """
-    print("\n" + "="*60)
-    print("TESTING INFERENCE PIPELINE")
-    print("="*60)
+
+    print_header("TESTING INFERENCE PIPELINE")
     
     # Load artifacts
     model, scaler, columns_to_scale, all_features = load_artifacts()
     
     # Load some validation data to test with
-    print("\n📂 Loading validation data for testing...")
+    print("\nLoading validation data for testing...")
     val_data = pd.read_csv(config.paths.val_file)
     
     # Take a small sample for quick testing
@@ -243,16 +243,16 @@ def test_inference_pipeline():
         actual = test_sample['target'].values
         accuracy = (predictions == actual).mean()
         
-        print(f"\n✅ TEST RESULTS:")
+        print_success(f"\nTEST RESULTS:")
         print(f"   Accuracy on test sample: {accuracy:.2%}")
-        print(f"   Predictions match expected format: ✅")
+        print(f"   Predictions match expected format")
         
         # Show some examples
         print(f"\n📋 Sample Predictions:")
         for i in range(min(5, len(predictions))):
             print(f"   Sample {i+1}: Actual={actual[i]}, Predicted={predictions[i]}, Probability={probabilities[i]:.3f}")
     
-    print("\n✅ Inference pipeline test complete!")
+    print_success("\nInference pipeline test complete!")
     return True
 
 
@@ -263,14 +263,7 @@ def main():
     # Test the pipeline
     test_inference_pipeline()
     
-    print("\n" + "="*60)
-    print("Inference pipeline is ready for deployment!")
-    print("="*60)
-    print("\nNext steps:")
-    print("1. ✅ Inference pipeline working")
-    print("2. 📊 Generate performance report (confusion matrix, ROC curve, etc.)")
-    print("3. 🌐 Build Flask API (Step 3)")
-    print("4. 📱 Create Streamlit dashboard (Step 4)")
+    print_success("Inference pipeline is ready for deployment!")
 
 
 if __name__ == "__main__":

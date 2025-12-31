@@ -21,6 +21,7 @@ import json
 from datetime import datetime
 import os
 from config import config
+from terminal_colors import Colors, print_header, print_success, print_warning, print_error
 
 # Set style for professional-looking plots
 sns.set_style("whitegrid")
@@ -82,7 +83,7 @@ def plot_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, save_path: str
     
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"✅ Confusion matrix saved to {save_path}")
+    print_success(f"Confusion matrix saved to {save_path}")
     plt.close()
 
 
@@ -152,7 +153,7 @@ def plot_roc_curve(y_true: np.ndarray, y_prob: np.ndarray, save_path: str) -> No
     
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"✅ ROC curve saved to {save_path}")
+    print_success(f"ROC curve saved to {save_path}")
     plt.close()
 
 
@@ -225,7 +226,7 @@ def plot_feature_importance(model: object, feature_names: list, save_path: str, 
     
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"✅ Feature importance chart saved to {save_path}")
+    print_success(f"Feature importance chart saved to {save_path}")
     plt.close()
     
     # Return the top features for the written report
@@ -308,7 +309,7 @@ def plot_precision_recall_curve(y_true: np.ndarray, y_prob: np.ndarray, save_pat
     
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"✅ Precision-Recall curve saved to {save_path}")
+    print_success(f"Precision-Recall curve saved to {save_path}")
     plt.close()
 
 
@@ -424,7 +425,7 @@ def generate_text_report(
         f.write("END OF REPORT\n")
         f.write("="*70 + "\n")
     
-    print(f"✅ Text report saved to {save_path}")
+    print_success(f"Text report saved to {save_path}")
 
 
 def main():
@@ -437,27 +438,26 @@ def main():
     3. Create all visualizations
     4. Write text summary
     """
-    print("="*70)
-    print("GENERATING PERFORMANCE REPORT")
-    print("="*70)
+
+    print_header("GENERATING PERFORMANCE REPORT")
     print()
     
     # Create output directory using centralized config
     output_dir = config.paths.results_root / 'performance_report'
     os.makedirs(output_dir, exist_ok=True)
-    print(f"📁 Output directory: {output_dir}")
+    print(f"Output directory: {output_dir}")
     print()
     
     # Load model
     print("Loading model...")
     model = joblib.load(config.paths.models_root / 'xgboost_model.pkl')
-    print("✅ Model loaded")
+    print_success("Model loaded")
     print()
     
     # Load validation data
     print("Loading validation data...")
     val_data = pd.read_csv(config.paths.val_file)
-    print(f"✅ Loaded {len(val_data):,} validation samples")
+    print_success(f"Loaded {len(val_data):,} validation samples")
     print()
     
     # Prepare features
@@ -468,15 +468,15 @@ def main():
     X_val = val_data.drop(columns_to_drop, axis=1)
     y_true = val_data['target'].values
     
-    print(f"✅ Feature matrix: {X_val.shape}")
-    print(f"✅ True labels: {y_true.shape}")
+    print_success(f"Feature matrix: {X_val.shape}")
+    print_success(f"True labels: {y_true.shape}")
     print()
     
     # Generate predictions
     print("Generating predictions...")
     y_pred = model.predict(X_val)
     y_prob = model.predict_proba(X_val)[:, 1]
-    print(f"✅ Predictions complete")
+    print_success("Predictions complete")
     print()
     
     # Generate visualizations
@@ -520,10 +520,10 @@ def main():
     
     print()
     print("="*70)
-    print("✅ REPORT GENERATION COMPLETE!")
+    print_success("REPORT GENERATION COMPLETE!")
     print("="*70)
     print()
-    print(f"📊 All files saved to: {output_dir}/")
+    print_success(f"All files saved to: {output_dir}/")
     print()
     print("Generated files:")
     print("  1. 1_confusion_matrix.png")
@@ -531,9 +531,7 @@ def main():
     print("  3. 3_feature_importance.png")
     print("  4. 4_precision_recall_curve.png")
     print("  5. performance_report.txt")
-    print()
-    print("✅ Step 2.3 Complete: Model saved as model.pkl with performance report")
-    print("   containing 4+ visualizations")
+
 
 
 if __name__ == "__main__":

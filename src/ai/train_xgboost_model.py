@@ -9,6 +9,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, class
 from config import config
 from loaders import load_train_data, load_val_data
 from datetime import datetime
+from terminal_colors import Colors, print_header, print_success, print_warning, print_error
 import json
 import pandas as pd
 import numpy as np
@@ -163,9 +164,9 @@ def train_xgboost_model(
     )
 
 
-    print("Starting grid search... This may take 30+ minutes")
+    print_header("Starting grid search... This may take 30+ minutes")
     grid_search.fit(X_train, y_train)
-    print("Grid search complete!")
+    print_success("Grid search complete!")
 
 
     # Extract best configuration
@@ -192,7 +193,7 @@ def train_xgboost_model(
         'precision': precision
     })
 
-    print(f"\n=== MODEL PERFORMANCE ===")
+    print_header(f"MODEL PERFORMANCE")
     print(f"Accuracy:  {accuracy:.2%} (Target: ≥80%)")
     print(f"Recall:    {recall:.2%} (Target: ≥85%)")
     print(f"Precision: {precision:.2%} (Target: ≥70%)")
@@ -300,15 +301,16 @@ def main():
     ValueError
         If datasets contain incompatible dtypes or shapes.
     """
+
     # Load your existing processed data
-    print("\n📂 Loading processed datasets...")
+    print_header("\nLoading processed datasets")
     X_train, y_train = load_train_data(config)
     X_val, y_val = load_val_data(config)
     
     # Display dataset information
-    print(f"✅ Train: {len(X_train)} samples")
-    print(f"✅ Val: {len(X_val)} samples")
-    print(f"✅ Features: {X_train.shape[1]} columns")
+    print_success(f"Train: {len(X_train)} samples")
+    print_success(f"Val: {len(X_val)} samples")
+    print_success(f"Features: {X_train.shape[1]} columns")
     
     # Train and evaluate XGBoost model
     train_xgboost_model(X_train, y_train, X_val, y_val)
