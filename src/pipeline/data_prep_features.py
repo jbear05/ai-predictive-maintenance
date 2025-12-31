@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 import warnings
 from config import config
 import typing as t # For advanced type hinting
+from terminal_colors import Colors, print_header, print_success, print_warning, print_error
 # Ignore pandas future warnings for rolling/ewm operations
 warnings.filterwarnings('ignore') 
 
@@ -75,7 +76,7 @@ class CMAPSSDataPreparator:
         if not train_files:
             raise FileNotFoundError(f"No training files found matching {file_pattern} in {self.data_dir}")
         
-        print(f"Found {len(train_files)} training file(s)")
+        print_success(f"Found {len(train_files)} training file(s)")
         
         all_data: t.List[pd.DataFrame] = []
         
@@ -98,7 +99,7 @@ class CMAPSSDataPreparator:
 
         # Vertically concatenate all DataFrames
         combined_df: pd.DataFrame = pd.concat(all_data, ignore_index=True)
-        print(f"\nCombined dataset shape: {combined_df.shape}")
+        print(f"\n{Colors.GREEN}Combined dataset shape: {combined_df.shape}{Colors.END}")
         print(f"Total units: {combined_df['unit_id'].nunique()}")
         
         return combined_df
@@ -139,7 +140,7 @@ class CMAPSSDataPreparator:
         # Create binary target: 1 if RUL is within the failure window, 0 otherwise.
         df['target'] = np.where(df['RUL'] <= failure_window, 1, 0)
         
-        print(f"Target distribution:")
+        print(f"{Colors.GREEN}Target distribution:{Colors.END}")
         print(f"  Healthy (0): {(df['target']==0).sum()} ({(df['target']==0).sum()/len(df)*100:.1f}%)")
         print(f"  Failure Risk (1): {(df['target']==1).sum()} ({(df['target']==1).sum()/len(df)*100:.1f}%)")
         
@@ -175,7 +176,7 @@ class CMAPSSDataPreparator:
         2. Pandas groupby operations are already optimized in C
         3. For datasets under 1M rows, vectorized ops are faster
         """
-        print(f"  Input shape: {df.shape}")
+        print(f"  {Colors.GREEN}Input shape: {df.shape}{Colors.END}")
         df = df.copy()
         
         # Identify sensor columns
@@ -193,7 +194,7 @@ class CMAPSSDataPreparator:
         # Process each sensor with vectorized operations
         for i, sensor in enumerate(sensor_cols):
             if (i + 1) % 5 == 0:
-                print(f"    Processed {i + 1}/{len(sensor_cols)} sensors...")
+                print(f"    {Colors.BLUE}Processed {i + 1}/{len(sensor_cols)} sensors...{Colors.END}")
             
             grouped = df.groupby('unit_id')[sensor]
             
@@ -221,7 +222,7 @@ class CMAPSSDataPreparator:
                 lambda x: x - x.iloc[:max(1, int(len(x) * config.features.baseline_percentage))].mean()
             )
         
-        print(f"  Created {len(new_features)} sensor-based features")
+        print_success(f"  Created {len(new_features)} sensor-based features")
         
         # Cross-sensor aggregate features (overall equipment state)
         sensor_data = df[sensor_cols]
@@ -334,10 +335,10 @@ class CMAPSSDataPreparator:
         # 3. Save data quality report
         self.generate_quality_report(output_path)
         
-        print(f"✓ Saved train_processed.csv ({len(self.train_df):,} rows)")
-        print(f"✓ Saved val_processed.csv ({len(self.val_df):,} rows)")
-        print(f"✓ Saved feature_documentation.csv ({len(self.feature_names)} features)")
-        print(f"✓ Saved data_quality_report.txt")
+        print_success(f"Saved train_processed.csv ({len(self.train_df):,} rows)")
+        print_success(f"Saved val_processed.csv ({len(self.val_df):,} rows)")
+        print_success(f"Saved feature_documentation.csv ({len(self.feature_names)} features)")
+        print_success(f"Saved data_quality_report.txt")
     
     def generate_quality_report(self, output_path: Path) -> None:
         """
@@ -396,44 +397,34 @@ def main() -> None:
     Main entry point for the Step 1.3 data preparation script.
     Orchestrates the loading, target creation, feature engineering, splitting, and saving.
     """
-    print("="*60)
-    print("C-MAPSS DATA PREPARATION & FEATURE ENGINEERING (Step 1.3)")
-    print("="*60)
+
+    print_header("DATA FEATURE ENGINEERING")
     
     # Initialize preparator to manage the workflow
     prep: CMAPSSDataPreparator = CMAPSSDataPreparator(data_dir='data\\processed')
     
     # Step 1: Load the cleaned data from Step 1.2
-    print("\n[STEP 1] Loading and combining CLEANED train files...")
+    print(f"\n{Colors.BOLD}[STEP 1]{Colors.END} Loading and combining CLEANED train files...")
     combined_df: pd.DataFrame = prep.load_and_combine_train_files(file_pattern='train_FD*_cleaned.csv', use_cleaned=True)
 
     
     # Step 2: Create target variable (Failure Imminence)
-    print("\n[STEP 2] Creating RUL and binary target variable...")
+    print(f"\n{Colors.BOLD}[STEP 2]{Colors.END} Creating RUL and binary target variable...")
     df_with_target: pd.DataFrame = prep.create_target_variable(combined_df, failure_window=48)
     
     # Step 3: Engineer features
-    print("\n[STEP 3] Engineering features...")
+    print(f"\n{Colors.BOLD}[STEP 3]{Colors.END} Engineering features...")
     df_engineered: pd.DataFrame = prep.engineer_features(df_with_target)
     
     # Step 4: Create train/validation split (80/20 by unit_id)
-    print("\n[STEP 4] Creating unit-based train/validation split...")
+    print(f"\n{Colors.BOLD}[STEP 4]{Colors.END} Creating unit-based train/validation split...")
     train_df, val_df = prep.create_train_val_split(df_engineered, test_size=0.2)
     
     # Step 5: Save datasets and documentation
-    print("\n[STEP 5] Saving processed datasets and documentation...")
+    print(f"\n{Colors.BOLD}[STEP 5]{Colors.END} Saving processed datasets and documentation...")
     prep.save_datasets(output_dir=str(config.paths.processed_data))
 
     df = pd.read_csv(config.paths.val_file)
-    unit_249 = df[df['unit_id'] == 249]
-    print(unit_249[['time_cycles', 'cycle_normalized']].tail(20))
-    
-    print("\n" + "="*60)
-    print("✓ STEP 1.3 DATA PREPARATION COMPLETE")
-    print("="*60)
-    print(f"\nNext Steps (Project Phase 2: AI Model Development):")
-    print(f"1. Review final data quality and feature documentation in '{config.paths.processed_data}'")
-    print(f"2. Proceed to model training using '{config.paths.train_file}'")
 
 
 if __name__ == "__main__":

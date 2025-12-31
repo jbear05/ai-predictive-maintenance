@@ -6,6 +6,8 @@ Verify all required packages are installed
 
 import sys
 import types # Import types for robust checking
+import importlib.metadata
+from terminal_colors import Colors, print_error, print_success, print_warning, print_header
 
 def test_python_version() -> tuple[bool, str]:
     """
@@ -19,7 +21,7 @@ def test_python_version() -> tuple[bool, str]:
     version = sys.version_info
     
     # Print the full version number for user visibility
-    print(f"Python {version.major}.{version.minor}.{version.micro}")
+    print(f"Recommended: Python {version.major}.{version.minor}.{version.micro}")
     
     # Check if the major version is 3 and minor version is 8 or greater
     if version.major == 3 and version.minor >= 8:
@@ -51,8 +53,12 @@ def test_package(package_name: str, import_name: str | None = None) -> tuple[boo
         # Dynamically import the module using its import name
         module: types.ModuleType = __import__(import_name) 
         
-        # Safely get the version attribute, defaulting to 'unknown'
-        version: str = getattr(module, '__version__', 'unknown')
+        # Try to get version using importlib.metadata first (preferred for modern packages)
+        try:
+            version: str = importlib.metadata.version(package_name)
+        except importlib.metadata.PackageNotFoundError:
+            # Fall back to module's __version__ attribute
+            version: str = getattr(module, '__version__', 'unknown')
         return True, version
     except ImportError:
         # If the import fails, the package is not installed
@@ -65,22 +71,19 @@ def main():
     """
     
     # --- Report Header ---
-    print("=" * 70)
-    print("PYTHON ENVIRONMENT TEST - CMMS AI PROJECT")
-    print("=" * 70)
+    print_header("PYTHON ENVIRONMENT TEST")
     
     # --- Test 1: Python version ---
-    print("\n📌 Python Version Check:")
-    print("-" * 70)
+    print(f"\nPython Version Check:")
+    print(f"{'-'*70}")
     success, status = test_python_version()
     print(f"{status} Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
     
     if not success:
-        print("\n⚠️  WARNING: Python 3.8+ recommended. Please upgrade.")
+        print_warning("⚠️ Recommended Python version is 3.8 or higher.")
     
     # --- Test 2: Required Packages ---
-    print("\n📦 Required Packages Check:")
-    print("-" * 70)
+    print_header("REQUIRED PACKAGES CHECK")
     
     # List of all required packages for Phases 1-3 of the project plan
     packages: list[tuple[str, str]] = [
@@ -106,33 +109,29 @@ def main():
     for display_name, import_name in packages:
         success, version = test_package(display_name, import_name)
         if success:
-            status = "✅"
-            # Format version string
             version_str = f"v{version}" if version != 'unknown' else ""
-            print(f"{status} {display_name:<20} {version_str}")
+            print_success(f"{display_name:<20} {version_str}")
             installed.append(display_name)
         else:
-            status = "❌"
-            print(f"{status} {display_name:<20} NOT INSTALLED")
+            print_error(f"{display_name:<20} NOT INSTALLED")
             missing.append(display_name)
             all_success = False
     
     # --- Summary and Guidance ---
-    print("\n" + "=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
+    print_header("SUMMARY")
+
     print(f"  Installed: {len(installed)}/{len(packages)} packages")
     print(f"  Missing:   {len(missing)}/{len(packages)} packages")
     
     if all_success:
-        print("\n🎉 SUCCESS! All required packages are installed!")
-        print("\n✅ Your environment is ready for the CMMS AI project!")
+        print_success("SUCCESS! All required packages are installed!")
+        print_success("Your environment is ready for the CMMS AI project!")
     else:
-        print(f"\n⚠️  MISSING PACKAGES: {', '.join(missing)}")
+        print_warning(f"⚠️  MISSING PACKAGES: {', '.join(missing)}")
         print("\nTo install missing packages, run:")
         print(f"  pip install {' '.join(missing)}")
         
-    print("\n" + "=" * 70)
+    print(f"\n{'='*70}")
     
     return all_success
 

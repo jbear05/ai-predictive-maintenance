@@ -19,44 +19,13 @@ Usage:
     python run_pipeline.py --dashboard-only  # Only launch dashboard
 """
 
+
 import subprocess
 import sys
 import os
 from pathlib import Path
 import argparse
-
-
-# Colors for terminal output (Windows compatible)
-class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    END = '\033[0m'
-    BOLD = '\033[1m'
-
-
-def print_header(step_num: int, title: str) -> None:
-    """Print a formatted step header."""
-    print(f"\n{'='*70}")
-    print(f"{Colors.BOLD}{Colors.BLUE}STEP {step_num}: {title}{Colors.END}")
-    print(f"{'='*70}\n")
-
-
-def print_success(message: str) -> None:
-    """Print a success message."""
-    print(f"{Colors.GREEN}✅ {message}{Colors.END}")
-
-
-def print_error(message: str) -> None:
-    """Print an error message."""
-    print(f"{Colors.RED}❌ {message}{Colors.END}")
-
-
-def print_warning(message: str) -> None:
-    """Print a warning message."""
-    print(f"{Colors.YELLOW}⚠️  {message}{Colors.END}")
+from src.pipeline.terminal_colors import print_error, print_success, print_warning, print_header, Colors
 
 
 def run_script(script_path: Path, description: str) -> bool:
@@ -169,14 +138,13 @@ Examples:
     print(f"{Colors.BOLD}{Colors.HEADER}")
     print("    🔧 AI PREDICTIVE MAINTENANCE PIPELINE 🔧")
     print(f"{Colors.END}")
-    print(f"{'='*70}")
+    print(f"{'='*70}\n")
     print(f"Project Root: {project_root}")
     print(f"Python: {sys.executable}")
-    print(f"{'='*70}\n")
     
     # Dashboard only mode
     if args.dashboard_only:
-        print_header(7, "LAUNCHING DASHBOARD")
+        print_header("LAUNCHING DASHBOARD")
         dashboard_script = project_root / 'run_dashboard.py'
         run_script(dashboard_script, "Launch Streamlit prediction dashboard")
         return
@@ -187,7 +155,7 @@ Examples:
     # =========================================================================
     # STEP 1: Test Setup
     # =========================================================================
-    print_header(1, "TEST SETUP")
+    print_header("TEST SETUP")
     setup_script = src_dir / 'pipeline' / 'test_setup.py'
     
     if setup_script.exists():
@@ -206,7 +174,7 @@ Examples:
     # =========================================================================
     # STEP 2: Download Data
     # =========================================================================
-    print_header(2, "DOWNLOAD DATA")
+    print_header("DOWNLOAD DATA")
     download_script = src_dir / 'pipeline' / 'download_data.py'
     
     if args.skip_download and check_data_exists(data_dir) and not args.force:
@@ -226,7 +194,7 @@ Examples:
     # =========================================================================
     # STEP 3: Verify Data
     # =========================================================================
-    print_header(3, "VERIFY DATA")
+    print_header("VERIFY DATA")
     verify_script = src_dir / 'pipeline' / 'verify_data.py'
     
     if verify_script.exists():
@@ -242,7 +210,7 @@ Examples:
     # =========================================================================
     # STEP 4: Clean Data
     # =========================================================================
-    print_header(4, "CLEAN DATA")
+    print_header("CLEAN DATA")
     clean_script = src_dir / 'pipeline' / 'clean_data.py'
     
     if clean_script.exists():
@@ -258,7 +226,7 @@ Examples:
     # =========================================================================
     # STEP 5: Feature Preparation
     # =========================================================================
-    print_header(5, "FEATURE PREPARATION")
+    print_header("FEATURE PREPARATION")
     feature_script = src_dir / 'pipeline' / 'data_prep_features.py'
     
     if feature_script.exists():
@@ -274,7 +242,7 @@ Examples:
     # =========================================================================
     # STEP 6: Fix Scaler
     # =========================================================================
-    print_header(6, "FIX SCALER")
+    print_header("FIX SCALER")
     scaler_script = src_dir / 'pipeline' / 'fix_scaler.py'
     
     if scaler_script.exists():
@@ -291,7 +259,7 @@ Examples:
     # STEP 7: Run Dashboard (optional)
     # =========================================================================
     if not args.no_dashboard:
-        print_header(7, "LAUNCHING DASHBOARD")
+        print_header("LAUNCHING DASHBOARD")
         dashboard_script = project_root / 'run_dashboard.py'
         
         if dashboard_script.exists():

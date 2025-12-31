@@ -15,6 +15,8 @@ from sklearn.preprocessing import MinMaxScaler
 import os
 import typing as t
 from config import config
+from src.pipeline.terminal_colors import Colors, print_header, print_success, print_warning, print_error
+
 
 def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -42,7 +44,7 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("DataFrame must contain sensor columns")
     
     # 1. Handling Missing Values
-    print("\n--- 1. Missing Value Check & Removal ---")
+    print(f"\n{Colors.BOLD}--- 1. Missing Value Check & Removal ---{Colors.END}")
     
     # Check and print the count and percentage of null values per column
     missing_counts: pd.Series = df.isnull().sum()
@@ -56,11 +58,11 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     # Drop rows with any missing values and save to a new DataFrame
     df_cleaned: pd.DataFrame = df.dropna()
 
-    print(f"\nOriginal rows: {len(df)}")
-    print(f"Rows after dropping NaNs: {len(df_cleaned)}")
+    print(f"\nOriginal rows: {Colors.YELLOW}{len(df):,}{Colors.END}")
+    print(f"Rows after dropping NaNs: {Colors.GREEN}{len(df_cleaned):,}{Colors.END}")
 
     # 2. Handling Outliers (3-Sigma Rule)
-    print("\n--- 2. Outlier Removal (3-Sigma) ---")
+    print(f"\n{Colors.BOLD}--- 2. Outlier Removal (3-Sigma) ---{Colors.END}")
 
     # Identify all columns containing sensor readings
     sensor_cols: t.List[str] = [col for col in df_cleaned.columns if col.startswith('sensor_')]
@@ -69,10 +71,10 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     # The 'remove_outliers_3sigma' function handles the logic for Z-scores and skips constant features.
     df_no_outliers: pd.DataFrame = remove_outliers_3sigma_vectorized(df_cleaned, sensor_cols)
     
-    print(f"Rows after dropping outliers: {len(df_no_outliers)}")
+    print(f"Rows after dropping outliers: {Colors.GREEN}{len(df_no_outliers):,}{Colors.END}")
 
     # 3. Normalization (Min-Max Scaling)
-    print("\n--- 3. Min-Max Normalization ---")
+    print(f"\n{Colors.BOLD}--- 3. Min-Max Normalization ---{Colors.END}")
 
     # Initialize the MinMaxScaler from scikit-learn
     scaler: MinMaxScaler = MinMaxScaler()
@@ -85,7 +87,7 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df_no_outliers[cols_to_scale] = scaler.fit_transform(df_no_outliers[cols_to_scale])
     
     # 4. Final Data Quality Report
-    print("\n--- 4. Data Quality Report for Step 1.2 ---")
+    print(f"\n{Colors.BOLD}--- 4. Data Quality Report ---{Colors.END}")
     
     # Check missing values
     final_missing_percent: float = (df_no_outliers.isnull().sum().sum() / (len(df_no_outliers) * len(df_no_outliers.columns))) * 100
@@ -104,14 +106,16 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
         min_val_display = 0.0
         max_val_display = 0.0
 
-    print(f"Total Percentage of Missing Values in Final Data: {final_missing_percent:.4f}%")
-    print(f"Target (<2% missing): {'✅ MET' if final_missing_percent < 2 else '❌ NOT MET'}")
+    print(f"Total Percentage of Missing Values in Final Data: {Colors.YELLOW}{final_missing_percent:.4f}%{Colors.END}")
+    status = f"{Colors.GREEN}✅ MET{Colors.END}" if final_missing_percent < 2 else f"{Colors.RED}❌ NOT MET{Colors.END}"
+    print(f"Target (<2% missing): {status}")
 
-    print("\nNormalization Check:")
-    print(f"All *variable* sensor columns normalized to 0-1 scale: {'✅ MET' if is_normalized else '❌ NOT MET'}")
+    print(f"\n{Colors.BOLD}Normalization Check:{Colors.END}")
+    norm_status = f"{Colors.GREEN}✅ MET{Colors.END}" if is_normalized else f"{Colors.RED}❌ NOT MET{Colors.END}"
+    print(f"All *variable* sensor columns normalized to 0-1 scale: {norm_status}")
     print(f"Min value of scaled sensors: {min_val_display:.4f}")
     print(f"Max value of scaled sensors: {max_val_display:.4f}")
-    print(f"Final dataset size: {len(df_no_outliers)} records")
+    print(f"Final dataset size: {Colors.GREEN}{len(df_no_outliers):,}{Colors.END} records")
     
     return df_no_outliers
 
@@ -133,7 +137,7 @@ def remove_outliers_3sigma_vectorized(df: pd.DataFrame, columns: list) -> pd.Dat
     mask = (z_scores < 3).all(axis=1)
     
     outliers_removed = (~mask).sum()
-    print(f"\n[SUMMARY] Outliers removed: {outliers_removed} rows ({outliers_removed/len(df_out)*100:.2f}%)")
+    print(f"\n{Colors.YELLOW}[SUMMARY]{Colors.END} Outliers removed: {Colors.RED}{outliers_removed:,}{Colors.END} rows ({outliers_removed/len(df_out)*100:.2f}%)")
     
     return df_out[mask]
 
@@ -153,10 +157,10 @@ def main() -> None:
     train_files: t.List[str] = [f for f in os.listdir(INPUT_DIR) if f.startswith('train_FD') and f.endswith('.txt')]
 
     if not train_files:
-        print(f"❌ ERROR: No training files found in {INPUT_DIR}")
+        print_error(f"ERROR: No training files found in {INPUT_DIR}")
         return
 
-    print(f"Found {len(train_files)} training file(s) to process:")
+    print_success(f"Found {len(train_files)} training file(s) to process:")
     for f in sorted(train_files):
         print(f"  📄 {f}")
     
@@ -170,16 +174,14 @@ def main() -> None:
         'sensor_19', 'sensor_20', 'sensor_21'
     ]
 
-    print("\n--- Starting Step 1.2: Data Cleaning and Normalization ---")
+    print_header("Data Cleaning and Normalization")
 
     # Create output directory
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # Process each file
     for train_file in sorted(train_files):
-        print("\n" + "="*70)
-        print(f"PROCESSING: {train_file}")
-        print("="*70)
+        print_header(f"PROCESSING: {train_file}")
         
         INPUT_FILE: str = os.path.join(INPUT_DIR, train_file)
         OUTPUT_FILE: str = os.path.join(OUTPUT_DIR, train_file.replace('.txt', '_cleaned.csv'))
@@ -187,31 +189,28 @@ def main() -> None:
         # --- 1. Load Data ---
         try:
             df_raw: pd.DataFrame = pd.read_csv(INPUT_FILE, sep=r'\s+', header=None, names=COLUMN_NAMES)
-            print(f"Successfully loaded {train_file} with {len(df_raw)} records.")
+            print_success(f"Successfully loaded {train_file} with {len(df_raw):,} records.")
         except FileNotFoundError:
-            print(f"❌ ERROR: Input file '{INPUT_FILE}' not found.")
+            print_error(f"ERROR: Input file '{INPUT_FILE}' not found.")
             continue
         except Exception as e:
-            print(f"❌ An unexpected error occurred during file loading: {e}")
+            print_error(f"An unexpected error occurred during file loading: {e}")
             continue
 
         # --- 2. Clean and Normalize Data ---
         df_clean_norm: pd.DataFrame = clean_dataset(df_raw)
 
         # --- 3. Save Cleaned Data ---
-        print("\n--- Saving Cleaned Data ---")
+        print_header(f"\nSaving Cleaned Data to {OUTPUT_FILE}")
         
         try:
             df_clean_norm.to_csv(OUTPUT_FILE, index=False)
-            print(f"✅ Success: Cleaned data saved to {OUTPUT_FILE}")
+            print_success(f"Success: Cleaned data saved to {OUTPUT_FILE}")
         except Exception as e:
-            print(f"❌ An error occurred while saving the file: {e}")
+            print_error(f"❌ An error occurred while saving the file: {e}")
 
-    print("\n" + "="*70)
-    print("✅ ALL FILES PROCESSED")
-    print("="*70)
-    print("Ready for Step 1.3: Feature Engineering and Train/Test Split.")
-    print("--- Step 1.2 Complete ---")
+    print_success(f"\nALL FILES PROCESSED\n")
+
     
 
 if __name__ == "__main__":
