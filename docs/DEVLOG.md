@@ -391,3 +391,22 @@
 ### Tomorrow's Plan
 - finish project
 - work on presentation/demo
+
+
+## Day 17
+
+### Goals for Today
+- finish project
+- work on presentation/demo
+
+### What I Did
+**Afternoon - Evening (12pm-11pm):**
+- 
+
+### Decisions
+- 
+### Problems/Solutions
+- 
+
+### Tomorrow's Plan
+- 
