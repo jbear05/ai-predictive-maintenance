@@ -377,14 +377,17 @@
 - finish project
 
 ### What I Did
-**Afternoon (12pm-6pm):**
-- 
+**Afternoon - Evening (12pm-11pm):**
+- graceful keyboard interrupt for dashboard and pipeline
+- terminal colors for better printing
+- worked on dashboard
 
 ### Decisions
-- 
+- Model training will be kept separate from pipeline to keep it simple and avoid users accidentally running model training scripts. 
 
 ### Problems/Solutions
-- 
+- None
 
 ### Tomorrow's Plan
-- 
+- finish project
+- work on presentation/demo
