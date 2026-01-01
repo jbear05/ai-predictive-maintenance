@@ -11,9 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import os
 import urllib.request
 import zipfile
+import shutil
 import typing as t # For type hinting complex structures
 from config import config
-from terminal_colors import Colors
+from terminal_colors import Colors, print_header, print_success, print_error, print_warning
 
 # dataset URL, directory paths, and zip file path
 URL = "https://phm-datasets.s3.amazonaws.com/NASA/6.+Turbofan+Engine+Degradation+Simulation+Data+Set.zip"
@@ -62,10 +63,8 @@ def download_cmapss_dataset() -> bool:
     os.makedirs(data_dir, exist_ok=True)
     
     # --- Start Report ---
-    print(f"{'='*70}")
-    print(f"{Colors.BOLD}{Colors.BLUE}NASA C-MAPSS DATASET DOWNLOADER (Step 1.1){Colors.END}")
-    print(f"{'='*70}")
-    print(f"\n📥 Starting download...")
+    print_header(f"NASA C-MAPSS DATASET DOWNLOADER")
+    print(f"\nStarting download...")
     print(f"Source: {URL}")
     print(f"Destination: {os.path.abspath(data_dir)}")
     print(f"{'-'*70}")
@@ -74,25 +73,57 @@ def download_cmapss_dataset() -> bool:
         # 1. Download File with Progress
         # The progress_hook defined above is used for visual feedback
         urllib.request.urlretrieve(URL, zip_path, progress_hook)
-        print(f"\n{Colors.GREEN}✅ Download complete!{Colors.END}")
+        print_success(f"Download complete!")
         
         # Get file size for confirmation
         file_size: float = os.path.getsize(zip_path) / (1024 * 1024)
-        print(f"📦 File size: {file_size:.2f} MB")
+        print(f"File size: {file_size:.2f} MB")
         
-        # 2. Extract Files
-        print(f"\n📂 Extracting files...")
+        # 2. Extract outer zip file
+        print(f"\n📂 Extracting outer zip file...")
+        temp_extract_dir = data_dir / "temp_extract"
+        
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            files: t.List[str] = zip_ref.namelist()
-            
-            # Extract each file and provide a simple counter
-            for i, file in enumerate(files, 1):
-                zip_ref.extract(file, data_dir)
-                print(f"\r  Extracting: {i}/{len(files)} files", end='', flush=True)
+            zip_ref.extractall(temp_extract_dir)
+            print(f"  Extracted outer zip")
         
-        print(f"\n{Colors.GREEN}✅ Extraction complete!{Colors.END}")
+        # 3. Find and extract inner CMAPSSData.zip
+        print(f"\n📦 Extracting inner CMAPSSData.zip...")
+        inner_zip_found = False
         
-        # 3. Final Verification and Cleanup
+        for root, dirs, files in os.walk(temp_extract_dir):
+            for file in files:
+                if file.endswith('.zip'):
+                    inner_zip_path = os.path.join(root, file)
+                    print(f"  Found inner zip: {file}")
+                    
+                    # Extract the inner zip to data_dir
+                    with zipfile.ZipFile(inner_zip_path, 'r') as inner_zip:
+                        inner_files = inner_zip.namelist()
+                        for i, inner_file in enumerate(inner_files, 1):
+                            inner_zip.extract(inner_file, data_dir)
+                            print(f"\r  Extracting: {i}/{len(inner_files)} files", end='', flush=True)
+                        
+                        inner_zip_found = True
+                    print()
+        
+        print_success("Extraction complete!")
+        
+        # 4. Clean up temporary directory
+        print(f"\n🧹 Cleaning up...")
+        print(f"  Checking for temp directory: {temp_extract_dir}")
+        print(f"  Exists? {os.path.exists(temp_extract_dir)}")
+        
+        if os.path.exists(temp_extract_dir):
+            try:
+                shutil.rmtree(temp_extract_dir)
+                print(f"  ✓ Removed temporary extraction directory")
+            except Exception as e:
+                print_warning(f"  Could not remove temp directory: {e}")
+        else:
+            print(f"  Temp directory already removed")
+        
+        # 5. Final Verification and Cleanup
         
         # List and confirm extracted files
         print(f"\n📁 Downloaded dataset files:")
@@ -103,36 +134,35 @@ def download_cmapss_dataset() -> bool:
         for file in sorted(txt_files):
             filepath: str = os.path.join(data_dir, file)
             size: float = os.path.getsize(filepath) / (1024 * 1024)
-            print(f"  ✓ {file:<30} ({size:>6.2f} MB)")
+            print(f"  ✓ {file:<30} ({size:>6.2f} MB)")
         
         # Clean up the temporary zip file
         os.remove(zip_path)
-        print(f"\n🗑️  Removed temporary zip file: {zip_path}")
+        print(f"\nRemoved temporary zip file: {zip_path}")
         
         # --- Final Summary ---
-        print(f"\n{'='*70}")
-        print(f"{Colors.GREEN}🎉 SUCCESS! Dataset ready for analysis!{Colors.END}")
-        print(f"{'='*70}")
+        print_success("SUCCESS! Dataset ready for analysis!")
+
         print(f"\n📍 Dataset location: {os.path.abspath(data_dir)}")
         print(f"📊 Total data files: {len(txt_files)}")
-        print(f"\n✅ STEP 1.1 COMPLETE - Dataset acquired!")
+        print_success(f"STEP 1.1 COMPLETE - Dataset acquired!")
         print(f"\nNext: Run 'python clean_data.py' to process the data")
         
         return True
         
     except urllib.error.URLError as e:
         # Handle network-related errors (e.g., no internet, bad URL)
-        print(f"\n\n{Colors.RED}❌ Network Error: {e}{Colors.END}")
+        print_error(f"Network Error: {e}")
         print("Check your internet connection and verify the URL is correct.")
         return False
     except zipfile.BadZipFile:
         # Handle cases where the downloaded file is incomplete or corrupted
-        print(f"\n\n{Colors.RED}❌ Error: Downloaded zip file is corrupted{Colors.END}")
+        print_error("Error: Downloaded zip file is corrupted")
         print("Try deleting the .zip file and running the script again.")
         return False
     except Exception as e:
         # Catch any other unexpected errors
-        print(f"\n\n{Colors.RED}❌ Unexpected Error: {e}{Colors.END}")
+        print_error(f"Unexpected Error: {e}")
         return False
 
 
@@ -145,7 +175,7 @@ def main() -> None:
     success: bool = download_cmapss_dataset()
     
     if not success:
-        print(f"\n{Colors.YELLOW}⚠️  Download failed. You may need to download the dataset manually from:{Colors.END}")
+        print_error(f"Download failed. You may need to download the dataset manually from:")
         print(URL)
         sys.exit(1)
     
