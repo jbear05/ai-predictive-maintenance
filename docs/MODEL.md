@@ -17,6 +17,9 @@ This is a **predictive maintenance system** that warns you 1-2 weeks before equi
 ## Dataset
 
 **Source:** NASA C-MAPSS (simulated turbofan engine data)
+  
+**Relevance to Department of Energy (DoE):**
+Although the NASA C-MAPSS dataset is not directly from the U.S. Department of Energy (DoE), it closely mirrors the types of industrial sensor data and predictive maintenance challenges faced in DoE environments (e.g., turbines, generators, and other critical assets). The methods and pipeline developed here, including data cleaning, feature engineering, and model validation, are directly transferable to DoE datasets. This work provides a strong proof-of-concept for DoE predictive maintenance applications, demonstrating best practices that can be adapted to real-world DoE data for early failure detection and operational reliability.
 
 **Key Stats:**
 - 157,139 total records from 260 engines
