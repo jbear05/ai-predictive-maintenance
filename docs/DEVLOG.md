@@ -401,12 +401,14 @@
 
 ### What I Did
 **Afternoon - Evening (12pm-11pm):**
-- 
+- project finalized
+- started working on presentation/demo
 
 ### Decisions
-- 
+- None
+
 ### Problems/Solutions
-- 
+- None
 
 ### Tomorrow's Plan
-- 
+- Finish presentation
